@@ -46,19 +46,33 @@
             width: 100%;
             box-sizing: border-box;
         }
+
+        .small-button {
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Reserve Your Place in Line</h1>
+        <p id="queuePlace">You are #<span id="place"></span> in line.</p>
         <button id="reserveBtn">Reserve Place</button>
         <p id="codeDisplay" class="hidden">Your download code: <span id="code"></span></p>
+
+        <a href="download.html"><button class="small-button">Go to Download Page</button></a>
+        <a href="photographer.html"><button class="small-button">Go to Photographer Page</button></a>
     </div>
 
     <script>
+        let queueCount = 0;
+
         document.getElementById('reserveBtn').addEventListener('click', function() {
-            const code = 'ABC123'; // Simulate generating a unique code
+            queueCount++;
+            const code = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit random number
             document.getElementById('code').textContent = code;
+            document.getElementById('queuePlace').textContent = 'You are #' + queueCount + ' in line.';
             document.getElementById('codeDisplay').classList.remove('hidden');
         });
     </script>
