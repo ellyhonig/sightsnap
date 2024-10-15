@@ -53,7 +53,7 @@
         <h1>Photographer Dashboard</h1>
         <button id="availableBtn">Become Available for Photoshoot</button>
         <p id="assignedCode" class="hidden">Assigned Code: <span id="queueCode"></span></p>
-        <input type="file" id="upload" class="hidden">
+        <input type="file" id="upload" class="hidden" accept="image/*">
         <button id="uploadBtn" class="hidden">Upload Photos</button>
     </div>
 
@@ -61,21 +61,28 @@
         let currentCode = '';
 
         document.getElementById('availableBtn').addEventListener('click', function() {
-            currentCode = 'ABC123'; // Simulate assigning the next queued code
-            document.getElementById('queueCode').textContent = currentCode;
-            document.getElementById('assignedCode').classList.remove('hidden');
-            document.getElementById('upload').classList.remove('hidden');
-            document.getElementById('uploadBtn').classList.remove('hidden');
+            currentCode = prompt("Enter next code from the queue (simulating assignment)");
+            if (currentCode) {
+                document.getElementById('queueCode').textContent = currentCode;
+                document.getElementById('assignedCode').classList.remove('hidden');
+                document.getElementById('upload').classList.remove('hidden');
+                document.getElementById('uploadBtn').classList.remove('hidden');
+            }
         });
 
         document.getElementById('uploadBtn').addEventListener('click', function() {
             const uploadInput = document.getElementById('upload');
             if (uploadInput.files.length > 0) {
-                alert('Photos uploaded for code: ' + currentCode);
-                document.getElementById('assignedCode').classList.add('hidden');
-                document.getElementById('upload').classList.add('hidden');
-                document.getElementById('uploadBtn').classList.add('hidden');
-                currentCode = '';
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
+                    alert('Photos uploaded for code: ' + currentCode);
+                    document.getElementById('assignedCode').classList.add('hidden');
+                    document.getElementById('upload').classList.add('hidden');
+                    document.getElementById('uploadBtn').classList.add('hidden');
+                    currentCode = '';
+                };
+                reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
             } else {
                 alert('Please select photos to upload.');
             }
