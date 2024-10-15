@@ -58,33 +58,35 @@
     </div>
 
     <script>
-        let currentCode = '';
-
         document.getElementById('availableBtn').addEventListener('click', function() {
-            currentCode = prompt("Enter next code from the queue (simulating assignment)");
-            if (currentCode) {
+            let queue = JSON.parse(localStorage.getItem('queue')) || [];
+            if (queue.length > 0) {
+                const currentCode = queue.shift(); // Get the first code from the queue
+                localStorage.setItem('queue', JSON.stringify(queue)); // Update the queue in localStorage
+
                 document.getElementById('queueCode').textContent = currentCode;
                 document.getElementById('assignedCode').classList.remove('hidden');
                 document.getElementById('upload').classList.remove('hidden');
                 document.getElementById('uploadBtn').classList.remove('hidden');
-            }
-        });
 
-        document.getElementById('uploadBtn').addEventListener('click', function() {
-            const uploadInput = document.getElementById('upload');
-            if (uploadInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
-                    alert('Photos uploaded for code: ' + currentCode);
-                    document.getElementById('assignedCode').classList.add('hidden');
-                    document.getElementById('upload').classList.add('hidden');
-                    document.getElementById('uploadBtn').classList.add('hidden');
-                    currentCode = '';
-                };
-                reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
+                document.getElementById('uploadBtn').addEventListener('click', function() {
+                    const uploadInput = document.getElementById('upload');
+                    if (uploadInput.files.length > 0) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
+                            alert('Photos uploaded for code: ' + currentCode);
+                            document.getElementById('assignedCode').classList.add('hidden');
+                            document.getElementById('upload').classList.add('hidden');
+                            document.getElementById('uploadBtn').classList.add('hidden');
+                        };
+                        reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
+                    } else {
+                        alert('Please select photos to upload.');
+                    }
+                });
             } else {
-                alert('Please select photos to upload.');
+                alert('No one is in the queue.');
             }
         });
     </script>
