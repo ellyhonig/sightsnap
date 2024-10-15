@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserve Your Spot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reserve Your Place in Line</h1>
+        <button id="reserveBtn">Reserve Place</button>
+        <p id="codeDisplay" class="hidden">Your download code: <span id="code"></span></p>
+    </div>
+
+    <script>
+        document.getElementById('reserveBtn').addEventListener('click', function() {
+            const code = 'ABC123'; // Simulate generating a unique code
+            document.getElementById('code').textContent = code;
+            document.getElementById('codeDisplay').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

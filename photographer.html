@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photographer Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Photographer Dashboard</h1>
+        <button id="availableBtn">Become Available for Photoshoot</button>
+        <p id="assignedCode" class="hidden">Assigned Code: <span id="queueCode"></span></p>
+        <input type="file" id="upload" class="hidden">
+        <button id="uploadBtn" class="hidden">Upload Photos</button>
+    </div>
+
+    <script>
+        let currentCode = '';
+
+        document.getElementById('availableBtn').addEventListener('click', function() {
+            currentCode = 'ABC123'; // Simulate assigning the next queued code
+            document.getElementById('queueCode').textContent = currentCode;
+            document.getElementById('assignedCode').classList.remove('hidden');
+            document.getElementById('upload').classList.remove('hidden');
+            document.getElementById('uploadBtn').classList.remove('hidden');
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            const uploadInput = document.getElementById('upload');
+            if (uploadInput.files.length > 0) {
+                alert('Photos uploaded for code: ' + currentCode);
+                document.getElementById('assignedCode').classList.add('hidden');
+                document.getElementById('upload').classList.add('hidden');
+                document.getElementById('uploadBtn').classList.add('hidden');
+                currentCode = '';
+            } else {
+                alert('Please select photos to upload.');
+            }
+        });
+    </script>
+</body>
+</html>
