@@ -60,14 +60,16 @@
     <script>
         document.getElementById('downloadBtn').addEventListener('click', function() {
             const codeInput = document.getElementById('codeInput').value;
-            
-            if (codeInput === 'ABC123') {
-                document.getElementById('downloadStatus').textContent = 'Photos are being downloaded...';
-                setTimeout(() => {
-                    document.getElementById('downloadStatus').textContent = 'Download complete!';
-                }, 2000);
+            const imageData = localStorage.getItem(codeInput);
+
+            if (imageData) {
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = 'photo.jpg';
+                link.click();
+                document.getElementById('downloadStatus').textContent = 'Download complete!';
             } else {
-                document.getElementById('downloadStatus').textContent = 'Invalid code. Please try again.';
+                document.getElementById('downloadStatus').textContent = 'Invalid code or no photo available.';
             }
         });
     </script>
