@@ -2,91 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photographer Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
+    <!-- Custom Styles -->
+    <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             background-color: #f7f7f7;
         }
 
         .container {
-            text-align: center;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 20px;
-            cursor: pointer;
+            margin-top: 100px;
+            max-width: 500px;
         }
 
         .hidden {
             display: none;
         }
 
-        input[type="file"] {
-            padding: 10px;
+        .btn-link {
             margin-top: 10px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
+        }
+
+        #upload {
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container text-center">
         <h1>Photographer Dashboard</h1>
-        <button id="availableBtn">Become Available for Photoshoot</button>
-        <p id="assignedCode" class="hidden">Assigned Code: <span id="queueCode"></span></p>
-        <input type="file" id="upload" class="hidden" accept="image/*">
-        <button id="uploadBtn" class="hidden">Upload Photos</button>
+        <button id="availableBtn" class="btn btn-primary mt-4">Get Next Code</button>
+        <p id="assignedCode" class="hidden mt-3">Assigned Code: <strong id="queueCode"></strong></p>
+        <input type="file" id="upload" class="hidden form-control-file mt-3" accept="image/*">
+        <button id="uploadBtn" class="hidden btn btn-success mt-3">Upload Photo</button>
+        <div class="mt-4">
+            <a href="reserve.html" class="btn btn-link">Go to Reserve Page</a>
+            <a href="download.html" class="btn btn-link">Go to Download Page</a>
+        </div>
     </div>
 
+    <!-- Custom Script -->
     <script>
-        document.getElementById('availableBtn').addEventListener('click', function() {
-            let queue = JSON.parse(localStorage.getItem('queue')) || [];
-            if (queue.length > 0) {
-                const currentCode = queue.shift(); // Get the first code from the queue
-                localStorage.setItem('queue', JSON.stringify(queue)); // Update the queue in localStorage
+        function getQueue() {
+            const queue = JSON.parse(localStorage.getItem('queue')) || [];
+            return queue;
+        }
 
+        function setQueue(queue) {
+            localStorage.setItem('queue', JSON.stringify(queue));
+        }
+
+        let currentCode = '';
+
+        document.getElementById('availableBtn').addEventListener('click', function() {
+            const queue = getQueue();
+            if (queue.length > 0) {
+                currentCode = queue.shift();
+                setQueue(queue);
                 document.getElementById('queueCode').textContent = currentCode;
                 document.getElementById('assignedCode').classList.remove('hidden');
                 document.getElementById('upload').classList.remove('hidden');
                 document.getElementById('uploadBtn').classList.remove('hidden');
-
-                document.getElementById('uploadBtn').addEventListener('click', function() {
-                    const uploadInput = document.getElementById('upload');
-                    if (uploadInput.files.length > 0) {
-                        const reader = new FileReader();
-                        reader.onload = function (e) {
-                            localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
-                            alert('Photos uploaded for code: ' + currentCode);
-                            document.getElementById('assignedCode').classList.add('hidden');
-                            document.getElementById('upload').classList.add('hidden');
-                            document.getElementById('uploadBtn').classList.add('hidden');
-                        };
-                        reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
-                    } else {
-                        alert('Please select photos to upload.');
-                    }
-                });
             } else {
-                alert('No one is in the queue.');
+                alert('No one in the queue.');
+            }
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            const uploadInput = document.getElementById('upload');
+            if (uploadInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
+                    alert('Photo uploaded for code: ' + currentCode);
+                    document.getElementById('assignedCode').classList.add('hidden');
+                    document.getElementById('upload').classList.add('hidden');
+                    document.getElementById('uploadBtn').classList.add('hidden');
+                    currentCode = '';
+                };
+                reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
+            } else {
+                alert('Please select a photo to upload.');
             }
         });
     </script>
