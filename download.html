@@ -2,74 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Your Photos</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
+    <!-- Custom Styles -->
+    <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             background-color: #f7f7f7;
         }
 
         .container {
-            text-align: center;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 20px;
-            cursor: pointer;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
+            margin-top: 100px;
+            max-width: 500px;
         }
 
         #downloadStatus {
             margin-top: 20px;
             font-weight: bold;
         }
+
+        .btn-link {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Download Your Photos</h1>
-        <input type="text" id="codeInput" placeholder="Enter your download code">
-        <button id="downloadBtn">Download Photos</button>
+    <div class="container text-center">
+        <h1>Download Your Photo</h1>
+        <input type="text" id="codeInput" class="form-control mt-4" placeholder="Enter your download code">
+        <button id="downloadBtn" class="btn btn-primary mt-3">Download Photo</button>
         <p id="downloadStatus"></p>
+        <div class="mt-4">
+            <a href="reserve.html" class="btn btn-link">Go to Reserve Page</a>
+            <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
+        </div>
     </div>
 
+    <!-- Custom Script -->
     <script>
         document.getElementById('downloadBtn').addEventListener('click', function() {
-            const codeInput = document.getElementById('codeInput').value;
+            const codeInput = document.getElementById('codeInput').value.trim();
             const imageData = localStorage.getItem(codeInput);
 
             if (imageData) {
                 const link = document.createElement('a');
                 link.href = imageData;
                 link.download = 'photo.jpg';
+                document.body.appendChild(link); // Required for Firefox
                 link.click();
-                document.getElementById('downloadStatus').textContent = 'Download complete!';
+                document.body.removeChild(link);
+                document.getElementById('downloadStatus').textContent = 'Download started!';
             } else {
-                document.getElementById('downloadStatus').textContent = 'Invalid code or no photo available.';
+                document.getElementById('downloadStatus').textContent = 'Invalid code or photo not available.';
             }
         });
     </script>
