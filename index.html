@@ -2,69 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserve Your Spot</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
+    <!-- Custom Styles -->
+    <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             background-color: #f7f7f7;
         }
 
         .container {
-            text-align: center;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 20px;
-            cursor: pointer;
+            margin-top: 100px;
+            max-width: 500px;
         }
 
         .hidden {
             display: none;
         }
 
-        .small-button {
-            font-size: 12px;
-            padding: 5px 10px;
+        .btn-link {
             margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container text-center">
         <h1>Reserve Your Place in Line</h1>
-        <p id="queuePlace">You are #<span id="place"></span> in line.</p>
-        <button id="reserveBtn">Reserve Place</button>
-        <p id="codeDisplay" class="hidden">Your download code: <span id="code"></span></p>
-
-        <a href="download.html"><button class="small-button">Go to Download Page</button></a>
-        <a href="photographer.html"><button class="small-button">Go to Photographer Page</button></a>
+        <p id="queuePlace">You are #<span id="place">0</span> in line.</p>
+        <button id="reserveBtn" class="btn btn-primary mt-4">Reserve Place</button>
+        <p id="codeDisplay" class="hidden mt-3">Your download code: <strong id="code"></strong></p>
+        <div class="mt-4">
+            <a href="download.html" class="btn btn-link">Go to Download Page</a>
+            <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
+        </div>
     </div>
 
+    <!-- Custom Script -->
     <script>
-        let queueCount = 0;
+        function getQueue() {
+            const queue = JSON.parse(localStorage.getItem('queue')) || [];
+            return queue;
+        }
+
+        function setQueue(queue) {
+            localStorage.setItem('queue', JSON.stringify(queue));
+        }
 
         document.getElementById('reserveBtn').addEventListener('click', function() {
-            queueCount++;
-            const code = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit random number
+            const code = Math.floor(1000 + Math.random() * 9000).toString();
+            const queue = getQueue();
+            queue.push(code);
+            setQueue(queue);
+
+            document.getElementById('place').textContent = queue.length;
             document.getElementById('code').textContent = code;
-            document.getElementById('queuePlace').textContent = 'You are #' + queueCount + ' in line.';
             document.getElementById('codeDisplay').classList.remove('hidden');
         });
     </script>
