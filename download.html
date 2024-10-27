@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download Your Photos</title>
+    <title>Download Your Photo</title>
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -13,7 +13,7 @@
         }
 
         .container {
-            margin-top: 100px;
+            margin-top: 50px;
             max-width: 500px;
         }
 
@@ -25,14 +25,34 @@
         .btn-link {
             margin-top: 10px;
         }
+
+        #photoContainer {
+            margin-top: 20px;
+        }
+
+        #photoContainer img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        #saveInstructions {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container text-center">
         <h1>Download Your Photo</h1>
         <input type="text" id="codeInput" class="form-control mt-4" placeholder="Enter your download code">
-        <button id="downloadBtn" class="btn btn-primary mt-3">Download Photo</button>
+        <button id="downloadBtn" class="btn btn-primary mt-3">View Photo</button>
         <p id="downloadStatus"></p>
+        <div id="photoContainer" class="hidden">
+            <img id="downloadedPhoto" src="" alt="Your Photo">
+            <p id="saveInstructions">Tap and hold the photo to save it to your Photos app.</p>
+        </div>
         <div class="mt-4">
             <a href="reserve.html" class="btn btn-link">Go to Reserve Page</a>
             <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
@@ -46,15 +66,12 @@
             const imageData = localStorage.getItem(codeInput);
 
             if (imageData) {
-                const link = document.createElement('a');
-                link.href = imageData;
-                link.download = 'photo.jpg';
-                document.body.appendChild(link); // Required for Firefox
-                link.click();
-                document.body.removeChild(link);
-                document.getElementById('downloadStatus').textContent = 'Download started!';
+                document.getElementById('downloadStatus').textContent = '';
+                document.getElementById('photoContainer').classList.remove('hidden');
+                document.getElementById('downloadedPhoto').src = imageData;
             } else {
                 document.getElementById('downloadStatus').textContent = 'Invalid code or photo not available.';
+                document.getElementById('photoContainer').classList.add('hidden');
             }
         });
     </script>
