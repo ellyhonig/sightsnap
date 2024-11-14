@@ -10,7 +10,7 @@
             background-color: #f7f7f7;
         }
         .container {
-            margin-top: 100px;
+            margin-top: 50px;
             max-width: 500px;
         }
         .hidden {
@@ -39,21 +39,28 @@
             <a href="download.html" class="btn btn-link">Go to Download Page</a>
         </div>
     </div>
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
-            authDomain: "sightsnap-2024.firebaseapp.com",
-            projectId: "sightsnap-2024",
-            storageBucket: "sightsnap-2024.appspot.com",
-            messagingSenderId: "1097350952748",
-            appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
+            // Your Firebase configuration details
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentCode = '';
+        let currentDocId = '';
 
         async function getQueue() {
             const q = query(collection(db, "queue"), orderBy("timestamp"));
@@ -61,7 +68,7 @@
             return querySnapshot.docs.map(doc => ({ id: doc.id, code: doc.data().code }));
         }
 
-        async function removeTopFromQueue(id) {
+        async function removeFromQueue(id) {
             await deleteDoc(doc(db, "queue", id));
         }
 
@@ -69,18 +76,60 @@
             const queue = await getQueue();
             if (queue.length > 0) {
                 const firstInQueue = queue[0];
-                document.getElementById('queueCode').textContent = firstInQueue.code;
+                currentCode = firstInQueue.code;
+                currentDocId = firstInQueue.id;
+                document.getElementById('queueCode').textContent = currentCode;
                 document.getElementById('assignedCode').classList.remove('hidden');
+                document.getElementById('upload').classList.remove('hidden');
+                document.getElementById('uploadBtn').classList.remove('hidden');
+                // Remove the person from the queue
+                await removeFromQueue(currentDocId);
             } else {
                 alert('No one in the queue.');
             }
         });
 
+        document.getElementById('uploadBtn').addEventListener('click', async function() {
+            const uploadInput = document.getElementById('upload');
+            if (uploadInput.files.length > 0) {
+                let files = uploadInput.files;
+                let uploadPromises = [];
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const storageRef = ref(storage, `photos/${currentCode}/${file.name}`);
+                    uploadPromises.push(uploadBytes(storageRef, file));
+                }
+                await Promise.all(uploadPromises);
+                alert('Photos uploaded for code: ' + currentCode);
+                // Reset the UI
+                document.getElementById('assignedCode').classList.add('hidden');
+                document.getElementById('upload').classList.add('hidden');
+                document.getElementById('uploadBtn').classList.add('hidden');
+                document.getElementById('upload').value = '';
+                currentCode = '';
+                currentDocId = '';
+            } else {
+                alert('Please select photos to upload.');
+            }
+        });
+
+        // View photos for manually entered code
+        document.getElementById('viewManualCodeBtn').addEventListener('click', async function() {
+            const manualCode = document.getElementById('manualCodeInput').value.trim();
+            if (manualCode) {
+                // Implement functionality as needed
+                alert('Feature to view photos for code ' + manualCode + ' is not implemented.');
+            } else {
+                alert('Please enter a valid code.');
+            }
+        });
+
+        // Remove top person from queue
         document.getElementById('removeTopBtn').addEventListener('click', async function() {
             const queue = await getQueue();
             if (queue.length > 0) {
                 const firstInQueue = queue[0];
-                await removeTopFromQueue(firstInQueue.id);
+                await removeFromQueue(firstInQueue.id);
                 alert('Removed code: ' + firstInQueue.code + ' from the queue.');
             } else {
                 alert('Queue is already empty.');
