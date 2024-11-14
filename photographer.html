@@ -35,10 +35,18 @@
         <h1>Photographer Dashboard</h1>
         <button id="availableBtn" class="btn btn-primary mt-4">Get Next Code</button>
         <p id="assignedCode" class="hidden mt-3">Assigned Code: <strong id="queueCode"></strong></p>
-        <input type="file" id="upload" class="hidden form-control-file mt-3" accept="image/*">
-        <button id="uploadBtn" class="hidden btn btn-success mt-3">Upload Photo</button>
+        <input type="file" id="upload" class="hidden form-control-file mt-3" accept="image/*" multiple>
+        <button id="uploadBtn" class="hidden btn btn-success mt-3">Upload Photos</button>
+
+        <!-- New input for manually entering code -->
+        <input type="text" id="manualCodeInput" class="form-control mt-4" placeholder="Enter code manually">
+        <button id="viewManualCodeBtn" class="btn btn-secondary mt-2">View Photos for Entered Code</button>
+
+        <!-- New button to remove top person from queue -->
+        <button id="removeTopBtn" class="btn btn-danger mt-4">Remove Top Person from Queue</button>
+
         <div class="mt-4">
-            <a href="reserve.html" class="btn btn-link">Go to Reserve Page</a>
+            <a href="index.html" class="btn btn-link">Go to Reserve Page</a>
             <a href="download.html" class="btn btn-link">Go to Download Page</a>
         </div>
     </div>
@@ -46,8 +54,7 @@
     <!-- Custom Script -->
     <script>
         function getQueue() {
-            const queue = JSON.parse(localStorage.getItem('queue')) || [];
-            return queue;
+            return JSON.parse(localStorage.getItem('queue')) || [];
         }
 
         function setQueue(queue) {
@@ -59,7 +66,7 @@
         document.getElementById('availableBtn').addEventListener('click', function() {
             const queue = getQueue();
             if (queue.length > 0) {
-                currentCode = queue.shift();
+                currentCode = queue.shift(); // Remove first person from queue
                 setQueue(queue);
                 document.getElementById('queueCode').textContent = currentCode;
                 document.getElementById('assignedCode').classList.remove('hidden');
@@ -73,18 +80,58 @@
         document.getElementById('uploadBtn').addEventListener('click', function() {
             const uploadInput = document.getElementById('upload');
             if (uploadInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    localStorage.setItem(currentCode, e.target.result); // Save image in localStorage
-                    alert('Photo uploaded for code: ' + currentCode);
-                    document.getElementById('assignedCode').classList.add('hidden');
-                    document.getElementById('upload').classList.add('hidden');
-                    document.getElementById('uploadBtn').classList.add('hidden');
-                    currentCode = '';
-                };
-                reader.readAsDataURL(uploadInput.files[0]); // Convert file to base64
+                let imagesData = [];
+                let filesProcessed = 0;
+
+                for (let i = 0; i < uploadInput.files.length; i++) {
+                    const file = uploadInput.files[i];
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        imagesData.push(e.target.result);
+                        filesProcessed++;
+
+                        if (filesProcessed === uploadInput.files.length) {
+                            localStorage.setItem(currentCode, JSON.stringify(imagesData)); // Save images
+                            alert('Photos uploaded for code: ' + currentCode);
+                            document.getElementById('assignedCode').classList.add('hidden');
+                            document.getElementById('upload').classList.add('hidden');
+                            document.getElementById('uploadBtn').classList.add('hidden');
+                            uploadInput.value = '';
+                            currentCode = '';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
             } else {
-                alert('Please select a photo to upload.');
+                alert('Please select photos to upload.');
+            }
+        });
+
+        // View photos for manually entered code
+        document.getElementById('viewManualCodeBtn').addEventListener('click', function() {
+            const manualCode = document.getElementById('manualCodeInput').value.trim();
+            if (manualCode) {
+                const imagesData = localStorage.getItem(manualCode);
+                if (imagesData) {
+                    alert('Photos found for code: ' + manualCode);
+                    // Redirect or open a new page to display photos for entered code if needed
+                } else {
+                    alert('No photos found for code: ' + manualCode);
+                }
+            } else {
+                alert('Please enter a valid code.');
+            }
+        });
+
+        // Remove top person from queue
+        document.getElementById('removeTopBtn').addEventListener('click', function() {
+            const queue = getQueue();
+            if (queue.length > 0) {
+                const removedCode = queue.shift(); // Remove top of queue
+                setQueue(queue);
+                alert('Removed code: ' + removedCode + ' from the queue.');
+            } else {
+                alert('Queue is already empty.');
             }
         });
     </script>
