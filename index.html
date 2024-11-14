@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reserve Your Spot</title>
+    <title>Get Your Photo Taken</title>
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -10,10 +10,12 @@
     <style>
         body {
             background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
-            margin-top: 100px;
+            margin-top: 20px;
             max-width: 500px;
         }
 
@@ -21,28 +23,85 @@
             display: none;
         }
 
-        .btn-link {
-            margin-top: 10px;
+        #reserveBtn {
+            margin-top: 50px;
+        }
+
+        #queuePlace, #waitingMessage {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        /* Modal overlay styles */
+        #codeModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white background */
+            display: none; /* Hidden by default */
+            z-index: 1000;
+            overflow: auto;
+        }
+
+        #codeModalContent {
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+            padding: 20px;
+        }
+
+        #instructionText {
+            font-size: 5vw;
+            color: black;
+            margin-bottom: 20px;
+        }
+
+        #code {
+            color: red;
+            font-size: 20vw; /* Adjust font size as needed */
+            font-weight: bold;
+        }
+
+        .nav-buttons {
+            margin-top: 20px;
+        }
+
+        .nav-buttons a {
+            margin: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container text-center">
-        <h1>Reserve Your Place in Line</h1>
-        <p id="queuePlace">You are #<span id="place">0</span> in line.</p>
-        <button id="reserveBtn" class="btn btn-primary mt-4">Reserve Place</button>
-        <p id="codeDisplay" class="hidden mt-3">Your download code: <strong id="code"></strong></p>
-        <div class="mt-4">
+        <h1>Get Your Photo Taken</h1>
+        <p id="queuePlace" class="hidden">You are #<span id="place">0</span> in line.</p>
+        <p id="waitingMessage" class="hidden">Your photographer will be available soon.</p>
+        <button id="reserveBtn" class="btn btn-primary mt-4">Get Your Photo Taken</button>
+        <div class="nav-buttons">
             <a href="download.html" class="btn btn-link">Go to Download Page</a>
             <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
+        </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="codeModal">
+        <div id="codeModalContent">
+            <div id="instructionText">Hold this up for your photographer to find you</div>
+            <div id="code"></div>
+            <div class="nav-buttons">
+                <a href="download.html" class="btn btn-link">Download Page</a>
+                <a href="photographer.html" class="btn btn-link">Photographer Page</a>
+            </div>
         </div>
     </div>
 
     <!-- Custom Script -->
     <script>
         function getQueue() {
-            const queue = JSON.parse(localStorage.getItem('queue')) || [];
-            return queue;
+            return JSON.parse(localStorage.getItem('queue')) || [];
         }
 
         function setQueue(queue) {
@@ -51,14 +110,46 @@
 
         document.getElementById('reserveBtn').addEventListener('click', function() {
             const code = Math.floor(1000 + Math.random() * 9000).toString();
-            const queue = getQueue();
+            let queue = getQueue();
             queue.push(code);
             setQueue(queue);
 
-            document.getElementById('place').textContent = queue.length;
-            document.getElementById('code').textContent = code;
-            document.getElementById('codeDisplay').classList.remove('hidden');
+            const userPosition = queue.indexOf(code) + 1;
+
+            if (userPosition === 1) {
+                // User is at the front of the queue
+                document.getElementById('code').textContent = code;
+                document.getElementById('codeModal').style.display = 'block'; // Show the modal
+                localStorage.setItem('userCode', code);
+            } else {
+                // User is not at the front
+                document.getElementById('place').textContent = userPosition;
+                document.getElementById('queuePlace').classList.remove('hidden');
+                document.getElementById('waitingMessage').classList.remove('hidden');
+                localStorage.setItem('userCode', code);
+            }
+
+            // Disable the button after reservation
+            this.disabled = true;
         });
+
+        // Check queue status periodically
+        setInterval(function() {
+            const code = localStorage.getItem('userCode');
+            const queue = getQueue();
+            if (code && queue.length > 0) {
+                const userPosition = queue.indexOf(code) + 1;
+                if (userPosition === 1 && document.getElementById('codeModal').style.display === 'none') {
+                    // User is now at the front and modal is not already displayed
+                    document.getElementById('queuePlace').classList.add('hidden');
+                    document.getElementById('waitingMessage').classList.add('hidden');
+                    document.getElementById('code').textContent = code;
+                    document.getElementById('codeModal').style.display = 'block'; // Show the modal
+                } else {
+                    document.getElementById('place').textContent = userPosition;
+                }
+            }
+        }, 3000); // Check every 3 seconds
     </script>
 </body>
 </html>
