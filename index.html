@@ -82,51 +82,60 @@
             </div>
         </div>
     </div>
+    <!-- Firebase SDK -->
     <script type="module">
+        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
-            authDomain: "sightsnap-2024.firebaseapp.com",
-            projectId: "sightsnap-2024",
-            storageBucket: "sightsnap-2024.appspot.com",
-            messagingSenderId: "1097350952748",
-            appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
+            // Your Firebase configuration details
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function addToQueue(code) {
-            await addDoc(collection(db, "queue"), { code, timestamp: new Date() });
-        }
-
-        async function getQueue() {
-            const q = query(collection(db, "queue"), orderBy("timestamp"));
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({ id: doc.id, code: doc.data().code }));
-        }
-
-        async function removeTopFromQueue(id) {
-            await deleteDoc(doc(db, "queue", id));
-        }
+        let userCode = '';
 
         document.getElementById('reserveBtn').addEventListener('click', async function() {
-            const code = Math.floor(1000 + Math.random() * 9000).toString();
-            await addToQueue(code);
-            document.getElementById('code').textContent = code;
+            userCode = Math.floor(1000 + Math.random() * 9000).toString();
+            await addDoc(collection(db, "queue"), { code: userCode, timestamp: new Date() });
+            localStorage.setItem('userCode', userCode);
+            document.getElementById('code').textContent = userCode;
             document.getElementById('codeModal').style.display = 'block';
+            // Disable the button after reservation
+            this.disabled = true;
         });
 
+        // Periodically check queue status
         setInterval(async function() {
-            const queue = await getQueue();
-            if (queue.length > 0) {
-                const firstInQueue = queue[0];
-                document.getElementById('queuePlace').classList.add('hidden');
-                document.getElementById('waitingMessage').classList.add('hidden');
-                document.getElementById('code').textContent = firstInQueue.code;
-                document.getElementById('codeModal').style.display = 'block';
+            const queueRef = collection(db, "queue");
+            const q = query(queueRef, orderBy("timestamp"));
+            const querySnapshot = await getDocs(q);
+            const queue = querySnapshot.docs.map(doc => doc.data().code);
+            const position = queue.indexOf(userCode) + 1;
+
+            if (userCode && position > 0) {
+                if (position === 1) {
+                    // User is at the front
+                    document.getElementById('code').textContent = userCode;
+                    document.getElementById('codeModal').style.display = 'block';
+                    document.getElementById('queuePlace').classList.add('hidden');
+                    document.getElementById('waitingMessage').classList.add('hidden');
+                } else {
+                    // Update position in queue
+                    document.getElementById('place').textContent = position;
+                    document.getElementById('queuePlace').classList.remove('hidden');
+                    document.getElementById('waitingMessage').classList.remove('hidden');
+                }
             }
         }, 3000);
     </script>
