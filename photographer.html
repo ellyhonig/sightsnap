@@ -1,57 +1,47 @@
-<!-- download.html -->
+<!-- photographer.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download Your Photo</title>
+    <title>Photographer Dashboard</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             background-color: #f7f7f7;
         }
         .container {
-            margin-top: 50px;
+            margin-top: 100px;
             max-width: 500px;
         }
-        #downloadStatus {
-            margin-top: 20px;
-            font-weight: bold;
+        .hidden {
+            display: none;
         }
         .btn-link {
             margin-top: 10px;
         }
-        #photoContainer {
-            margin-top: 20px;
-        }
-        #photoContainer img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            padding: 5px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        #saveInstructions {
-            margin-top: 10px;
+        #upload {
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
     <div class="container text-center">
-        <h1>Download Your Photos</h1>
-        <input type="text" id="codeInput" class="form-control mt-4" placeholder="Enter your download code">
-        <button id="downloadBtn" class="btn btn-primary mt-3">View Photos</button>
-        <p id="downloadStatus"></p>
-        <div id="photoContainer" class="hidden"></div>
-        <p id="saveInstructions" class="hidden">Tap and hold the photo to save it to your Photos app.</p>
+        <h1>Photographer Dashboard</h1>
+        <button id="availableBtn" class="btn btn-primary mt-4">Get Next Code</button>
+        <p id="assignedCode" class="hidden mt-3">Assigned Code: <strong id="queueCode"></strong></p>
+        <input type="file" id="upload" class="hidden form-control-file mt-3" accept="image/*" multiple>
+        <button id="uploadBtn" class="hidden btn btn-success mt-3">Upload Photos</button>
+        <input type="text" id="manualCodeInput" class="form-control mt-4" placeholder="Enter code manually">
+        <button id="viewManualCodeBtn" class="btn btn-secondary mt-2">View Photos for Entered Code</button>
+        <button id="removeTopBtn" class="btn btn-danger mt-4">Remove Top Person from Queue</button>
         <div class="mt-4">
-            <a href="index.html" class="btn btn-link">Go to Reserve Page</a>
-            <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
+            <a href="reserve.html" class="btn btn-link">Go to Reserve Page</a>
+            <a href="download.html" class="btn btn-link">Go to Download Page</a>
         </div>
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
@@ -65,30 +55,35 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function getPhotoURLs(code) {
-            const q = query(collection(db, "photos"), where("code", "==", code));
+        async function getQueue() {
+            const q = query(collection(db, "queue"), orderBy("timestamp"));
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => doc.data().url);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, code: doc.data().code }));
         }
 
-        document.getElementById('downloadBtn').addEventListener('click', async function() {
-            const codeInput = document.getElementById('codeInput').value.trim();
-            if (codeInput) {
-                const urls = await getPhotoURLs(codeInput);
-                if (urls.length > 0) {
-                    document.getElementById('photoContainer').classList.remove('hidden');
-                    document.getElementById('photoContainer').innerHTML = '';
-                    urls.forEach(url => {
-                        const img = document.createElement('img');
-                        img.src = url;
-                        document.getElementById('photoContainer').appendChild(img);
-                    });
-                    document.getElementById('saveInstructions').classList.remove('hidden');
-                } else {
-                    document.getElementById('downloadStatus').textContent = 'No photos available for this code.';
-                }
+        async function removeTopFromQueue(id) {
+            await deleteDoc(doc(db, "queue", id));
+        }
+
+        document.getElementById('availableBtn').addEventListener('click', async function() {
+            const queue = await getQueue();
+            if (queue.length > 0) {
+                const firstInQueue = queue[0];
+                document.getElementById('queueCode').textContent = firstInQueue.code;
+                document.getElementById('assignedCode').classList.remove('hidden');
             } else {
-                document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
+                alert('No one in the queue.');
+            }
+        });
+
+        document.getElementById('removeTopBtn').addEventListener('click', async function() {
+            const queue = await getQueue();
+            if (queue.length > 0) {
+                const firstInQueue = queue[0];
+                await removeTopFromQueue(firstInQueue.id);
+                alert('Removed code: ' + firstInQueue.code + ' from the queue.');
+            } else {
+                alert('Queue is already empty.');
             }
         });
     </script>
