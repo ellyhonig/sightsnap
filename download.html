@@ -1,35 +1,28 @@
+<!-- download.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Download Your Photos</title>
-    <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-    <!-- Custom Styles -->
     <style>
         body {
             background-color: #f7f7f7;
         }
-
         .container {
             margin-top: 50px;
             max-width: 500px;
         }
-
         #downloadStatus {
             margin-top: 20px;
             font-weight: bold;
         }
-
         .btn-link {
             margin-top: 10px;
         }
-
         #photoContainer {
             margin-top: 20px;
         }
-
         #photoContainer img {
             max-width: 100%;
             height: auto;
@@ -38,11 +31,9 @@
             border-radius: 5px;
             margin-bottom: 10px;
         }
-
         #saveInstructions {
             margin-top: 10px;
         }
-
         #buyButton {
             margin-top: 20px;
         }
@@ -66,14 +57,29 @@
             <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
         </div>
     </div>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js";
 
-    <!-- Custom Script -->
-    <script>
-        function displayPhotos(images, showAll) {
+        const firebaseConfig = {
+            // Your Firebase configuration details
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        function displayPhotos(urls, showAll) {
             const photoContainer = document.getElementById('photoContainer');
             photoContainer.innerHTML = '';
 
-            const imagesToShow = showAll ? images : [images[0]];
+            const imagesToShow = showAll ? urls : [urls[0]];
 
             imagesToShow.forEach(src => {
                 const img = document.createElement('img');
@@ -85,53 +91,40 @@
             document.getElementById('saveInstructions').classList.remove('hidden');
         }
 
-        function init() {
-            const storedCode = localStorage.getItem('userCode');
-            if (storedCode) {
-                // Hide code input and auto-fetch photos
-                document.getElementById('codeInputContainer').classList.add('hidden');
-                fetchPhotos(storedCode);
-            } else {
-                document.getElementById('codeInputContainer').classList.remove('hidden');
-            }
-        }
-
-        function fetchPhotos(code) {
-            const imagesData = localStorage.getItem(code);
-            if (imagesData) {
-                const images = JSON.parse(imagesData);
-                if (images.length > 0) {
-                    document.getElementById('downloadStatus').textContent = '';
-                    displayPhotos(images, false);
+        async function fetchPhotos(code) {
+            const listRef = ref(storage, `photos/${code}`);
+            try {
+                const res = await listAll(listRef);
+                const urlPromises = res.items.map(itemRef => getDownloadURL(itemRef));
+                const urls = await Promise.all(urlPromises);
+                if (urls.length > 0) {
+                    displayPhotos(urls, false);
                     document.getElementById('buyButton').classList.remove('hidden');
 
                     document.getElementById('buyButton').addEventListener('click', function() {
                         // Mock payment processing
                         alert('Payment successful! Unlocking all photos.');
-                        displayPhotos(images, true);
+                        displayPhotos(urls, true);
                         this.classList.add('hidden');
                     });
                 } else {
                     document.getElementById('downloadStatus').textContent = 'No photos available for this code.';
                 }
-            } else {
-                document.getElementById('downloadStatus').textContent = 'Invalid code or photos not available.';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('downloadStatus').textContent = 'Error retrieving photos.';
             }
         }
 
         document.getElementById('downloadBtn').addEventListener('click', function() {
             const codeInput = document.getElementById('codeInput').value.trim();
             if (codeInput) {
-                localStorage.setItem('userCode', codeInput);
                 fetchPhotos(codeInput);
                 document.getElementById('codeInputContainer').classList.add('hidden');
             } else {
                 document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
             }
         });
-
-        // Initialize the page
-        init();
     </script>
 </body>
 </html>
