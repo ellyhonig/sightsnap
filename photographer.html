@@ -6,6 +6,7 @@
     <title>Photographer Dashboard</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        /* Your existing CSS styles */
         body {
             background-color: #f7f7f7;
         }
@@ -41,20 +42,21 @@
     </div>
     <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-storage.js";
 
+        // Your Firebase configuration details
         const firebaseConfig = {
-    apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
-    authDomain: "sightsnap-2024.firebaseapp.com",
-    projectId: "sightsnap-2024",
-    storageBucket: "sightsnap-2024.appspot.com",
-    messagingSenderId: "1097350952748",
-    appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
-};
+            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            authDomain: "sightsnap-2024.firebaseapp.com",
+            projectId: "sightsnap-2024",
+            storageBucket: "sightsnap-2024.appspot.com",
+            messagingSenderId: "1097350952748",
+            appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
+        };
 
-
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
@@ -114,11 +116,10 @@
         });
 
         // View photos for manually entered code
-        document.getElementById('viewManualCodeBtn').addEventListener('click', async function() {
+        document.getElementById('viewManualCodeBtn').addEventListener('click', function() {
             const manualCode = document.getElementById('manualCodeInput').value.trim();
             if (manualCode) {
-                // Implement functionality as needed
-                alert('Feature to view photos for code ' + manualCode + ' is not implemented.');
+                window.location.href = `download.html?code=${manualCode}`;
             } else {
                 alert('Please enter a valid code.');
             }

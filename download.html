@@ -6,6 +6,7 @@
     <title>Download Your Photos</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        /* Your existing CSS styles */
         body {
             background-color: #f7f7f7;
         }
@@ -59,18 +60,20 @@
     </div>
     <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-storage.js";
 
+        // Your Firebase configuration details
         const firebaseConfig = {
-    apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
-    authDomain: "sightsnap-2024.firebaseapp.com",
-    projectId: "sightsnap-2024",
-    storageBucket: "sightsnap-2024.appspot.com",
-    messagingSenderId: "1097350952748",
-    appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
-};
+            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            authDomain: "sightsnap-2024.firebaseapp.com",
+            projectId: "sightsnap-2024",
+            storageBucket: "sightsnap-2024.appspot.com",
+            messagingSenderId: "1097350952748",
+            appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
+        };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
@@ -124,6 +127,14 @@
                 document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
             }
         });
+
+        // Check if code is passed in URL (from photographer's manual code view)
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromURL = urlParams.get('code');
+        if (codeFromURL) {
+            document.getElementById('codeInput').value = codeFromURL;
+            document.getElementById('downloadBtn').click();
+        }
     </script>
 </body>
 </html>

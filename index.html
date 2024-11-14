@@ -1,4 +1,4 @@
-<!-- reserve.html -->
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +6,7 @@
     <title>Get Your Photo Taken</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        /* Your existing CSS styles */
         body {
             background-color: #f7f7f7;
             margin: 0;
@@ -85,18 +86,18 @@
     <!-- Firebase SDK -->
     <script type="module">
         // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
+        // Your Firebase configuration details
         const firebaseConfig = {
-    apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
-    authDomain: "sightsnap-2024.firebaseapp.com",
-    projectId: "sightsnap-2024",
-    storageBucket: "sightsnap-2024.appspot.com",
-    messagingSenderId: "1097350952748",
-    appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
-};
+            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            authDomain: "sightsnap-2024.firebaseapp.com",
+            projectId: "sightsnap-2024",
+            storageBucket: "sightsnap-2024.appspot.com",
+            messagingSenderId: "1097350952748",
+            appId: "1:1097350952748:web:24f9ebc80288a7d8b65e89"
+        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -106,35 +107,31 @@
 
         document.getElementById('reserveBtn').addEventListener('click', async function() {
             userCode = Math.floor(1000 + Math.random() * 9000).toString();
-            await addDoc(collection(db, "queue"), { code: userCode, timestamp: new Date() });
+            await addDoc(collection(db, "queue"), { code: userCode, timestamp: Date.now() });
             localStorage.setItem('userCode', userCode);
             document.getElementById('code').textContent = userCode;
             document.getElementById('codeModal').style.display = 'block';
-            // Disable the button after reservation
             this.disabled = true;
         });
 
         // Periodically check queue status
         setInterval(async function() {
-            const queueRef = collection(db, "queue");
-            const q = query(queueRef, orderBy("timestamp"));
+            if (!userCode) return;
+            const q = query(collection(db, "queue"), orderBy("timestamp"));
             const querySnapshot = await getDocs(q);
             const queue = querySnapshot.docs.map(doc => doc.data().code);
             const position = queue.indexOf(userCode) + 1;
 
-            if (userCode && position > 0) {
-                if (position === 1) {
-                    // User is at the front
-                    document.getElementById('code').textContent = userCode;
-                    document.getElementById('codeModal').style.display = 'block';
-                    document.getElementById('queuePlace').classList.add('hidden');
-                    document.getElementById('waitingMessage').classList.add('hidden');
-                } else {
-                    // Update position in queue
-                    document.getElementById('place').textContent = position;
-                    document.getElementById('queuePlace').classList.remove('hidden');
-                    document.getElementById('waitingMessage').classList.remove('hidden');
-                }
+            if (position > 1) {
+                document.getElementById('place').textContent = position;
+                document.getElementById('queuePlace').classList.remove('hidden');
+                document.getElementById('waitingMessage').classList.remove('hidden');
+                document.getElementById('codeModal').style.display = 'none';
+            } else if (position === 1) {
+                document.getElementById('queuePlace').classList.add('hidden');
+                document.getElementById('waitingMessage').classList.add('hidden');
+                document.getElementById('code').textContent = userCode;
+                document.getElementById('codeModal').style.display = 'block';
             }
         }, 3000);
     </script>
