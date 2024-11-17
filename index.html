@@ -84,14 +84,14 @@
         </div>
     </div>
     <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
-
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            apiKey: "YOUR_API_KEY",
             authDomain: "sightsnap-2024.firebaseapp.com",
             projectId: "sightsnap-2024",
             storageBucket: "sightsnap-2024.appspot.com",
@@ -100,14 +100,14 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         let userCode = '';
 
         document.getElementById('reserveBtn').addEventListener('click', async function() {
             userCode = Math.floor(1000 + Math.random() * 9000).toString();
-            await addDoc(collection(db, "queue"), { code: userCode, timestamp: Date.now() });
+            await db.collection("queue").add({ code: userCode, timestamp: Date.now() });
             localStorage.setItem('userCode', userCode);
             document.getElementById('code').textContent = userCode;
             document.getElementById('codeModal').style.display = 'block';
@@ -117,8 +117,7 @@
         // Periodically check queue status
         setInterval(async function() {
             if (!userCode) return;
-            const q = query(collection(db, "queue"), orderBy("timestamp"));
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await db.collection("queue").orderBy("timestamp").get();
             const queue = querySnapshot.docs.map(doc => doc.data().code);
             const position = queue.indexOf(userCode) + 1;
 

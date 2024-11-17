@@ -33,7 +33,6 @@
         <p id="assignedCode" class="hidden mt-3">Assigned Code: <strong id="queueCode"></strong></p>
         <input type="file" id="upload" class="hidden form-control-file mt-3" accept="image/*" multiple>
         <button id="uploadBtn" class="hidden btn btn-success mt-3">Upload Photos</button>
-        <!-- Removed the 'View Photos for Entered Code' button and input -->
         <button id="removeTopBtn" class="btn btn-danger mt-4">Remove Top Person from Queue</button>
         <div class="mt-4">
             <a href="index.html" class="btn btn-link">Go to Reserve Page</a>
@@ -41,14 +40,15 @@
         </div>
     </div>
     <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-storage.js";
-
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            apiKey: "YOUR_API_KEY",
             authDomain: "sightsnap-2024.firebaseapp.com",
             projectId: "sightsnap-2024",
             storageBucket: "sightsnap-2024.appspot.com",
@@ -57,21 +57,20 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
 
         let currentCode = '';
         let currentDocId = '';
 
         async function getQueue() {
-            const q = query(collection(db, "queue"), orderBy("timestamp"));
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await db.collection("queue").orderBy("timestamp").get();
             return querySnapshot.docs.map(doc => ({ id: doc.id, code: doc.data().code }));
         }
 
         async function removeFromQueue(id) {
-            await deleteDoc(doc(db, "queue", id));
+            await db.collection("queue").doc(id).delete();
         }
 
         document.getElementById('availableBtn').addEventListener('click', async function() {
@@ -103,8 +102,8 @@
                     let uploadPromises = [];
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        const storageRef = ref(storage, `photos/${currentCode}/${file.name}`);
-                        uploadPromises.push(uploadBytes(storageRef, file));
+                        const storageRef = storage.ref(`photos/${currentCode}/${file.name}`);
+                        uploadPromises.push(storageRef.put(file));
                     }
                     await Promise.all(uploadPromises);
                     alert('Photos uploaded for code: ' + currentCode);
@@ -123,8 +122,6 @@
                 alert('Please select photos to upload.');
             }
         });
-
-        // Removed the event listener for 'viewManualCodeBtn'
 
         // Remove top person from queue
         document.getElementById('removeTopBtn').addEventListener('click', async function() {

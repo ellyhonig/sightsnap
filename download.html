@@ -59,13 +59,14 @@
         </div>
     </div>
     <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-storage.js";
-
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-            apiKey: "AIzaSyD_DaYMqiAPCsLMh8lf7_1BO8i4nbSPwC8",
+            apiKey: "YOUR_API_KEY",
             authDomain: "sightsnap-2024.firebaseapp.com",
             projectId: "sightsnap-2024",
             storageBucket: "sightsnap-2024.appspot.com",
@@ -74,8 +75,8 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
 
         function displayPhotos(urls, showAll) {
             const photoContainer = document.getElementById('photoContainer');
@@ -94,10 +95,10 @@
         }
 
         async function fetchPhotos(code) {
-            const listRef = ref(storage, `photos/${code}`);
+            const listRef = storage.ref(`photos/${code}`);
             try {
-                const res = await listAll(listRef);
-                const urlPromises = res.items.map(itemRef => getDownloadURL(itemRef));
+                const res = await listRef.listAll();
+                const urlPromises = res.items.map(itemRef => itemRef.getDownloadURL());
                 const urls = await Promise.all(urlPromises);
                 if (urls.length > 0) {
                     displayPhotos(urls, false);
