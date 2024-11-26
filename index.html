@@ -110,7 +110,7 @@
         document.getElementById('reserveBtn').addEventListener('click', async function() {
             userCode = Math.floor(1000 + Math.random() * 9000).toString();
             await db.collection("queue").add({ code: userCode, timestamp: Date.now() });
-            localStorage.setItem('userCode', userCode);
+            localStorage.setItem('downloadCode', userCode);
             document.getElementById('code').textContent = userCode;
             document.getElementById('codeModal').style.display = 'block';
             this.disabled = true;

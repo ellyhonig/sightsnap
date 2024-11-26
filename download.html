@@ -66,15 +66,14 @@
     <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-  apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
-  authDomain: "sight-snap.firebaseapp.com",
-  projectId: "sight-snap",
-  storageBucket: "sight-snap.firebasestorage.app",
-  messagingSenderId: "742529133150",
-  appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
-  measurementId: "G-XLDW0L2DMS"
-};
-
+            apiKey: "AIzaSyDCl5yDLEEmD0yUJRyWJPgx0VOePhk5_vk",
+            authDomain: "sight-snap.firebaseapp.com",
+            projectId: "sight-snap",
+            storageBucket: "sight-snap.appspot.com",
+            messagingSenderId: "180482741850",
+            appId: "1:180482741850:web:8e0af4ad916dd329079cbe",
+            measurementId: "G-2NXWN0DXTL"
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -121,49 +120,36 @@
             }
         }
 
-        document.getElementById('downloadBtn').addEventListener('click', function() {
-            const codeInput = document.getElementById('codeInput').value.trim();
-            if (codeInput) {
-                fetchPhotos(codeInput);
-                document.getElementById('codeInputContainer').classList.add('hidden');
-            } else {
-                document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
-            }
-        });
-
-        // Check if code is passed in URL (from photographer's manual code view)
-        const urlParams = new URLSearchParams(window.location.search);
-        const codeFromURL = urlParams.get('code');
-        if (codeFromURL) {
-            document.getElementById('codeInput').value = codeFromURL;
-            document.getElementById('downloadBtn').click();
-        }
-
-
-
+        // Combine all initialization code inside a single window.onload
         window.onload = function() {
-    const storedCode = localStorage.getItem('downloadCode');
+            // Retrieve the code from localStorage
+            const storedCode = localStorage.getItem('downloadCode');
 
-    if (storedCode) {
-      document.getElementById('codeInput').value = storedCode;
+            if (storedCode) {
+                document.getElementById('codeInput').value = storedCode;
+                localStorage.removeItem('downloadCode');
+                document.getElementById('downloadBtn').click();
+            }
 
-      // Optionally, remove the code from localStorage after using it
-      localStorage.removeItem('downloadCode');
-    }
-  };
+            // Event listener for the download button
+            document.getElementById('downloadBtn').addEventListener('click', function() {
+                const codeInput = document.getElementById('codeInput').value.trim();
+                if (codeInput) {
+                    fetchPhotos(codeInput);
+                    document.getElementById('codeInputContainer').classList.add('hidden');
+                } else {
+                    document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
+                }
+            });
 
-  function downloadPhotos() {
-    // Get the code from the input field
-    const code = document.getElementById('codeInput').value.trim();
-
-    if (code) {
-      // Proceed with your existing download logic using the code
-      // For example:
-      // fetchPhotos(code);
-    } else {
-      alert('Please enter a download code.');
-    }
-  }
+            // Check if code is passed in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromURL = urlParams.get('code');
+            if (codeFromURL) {
+                fetchPhotos(codeFromURL);
+                document.getElementById('codeInputContainer').classList.add('hidden');
+            }
+        };
     </script>
 </body>
 </html>
