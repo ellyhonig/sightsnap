@@ -138,6 +138,32 @@
             document.getElementById('codeInput').value = codeFromURL;
             document.getElementById('downloadBtn').click();
         }
+
+
+
+        window.onload = function() {
+    const storedCode = localStorage.getItem('downloadCode');
+
+    if (storedCode) {
+      document.getElementById('codeInput').value = storedCode;
+
+      // Optionally, remove the code from localStorage after using it
+      localStorage.removeItem('downloadCode');
+    }
+  };
+
+  function downloadPhotos() {
+    // Get the code from the input field
+    const code = document.getElementById('codeInput').value.trim();
+
+    if (code) {
+      // Proceed with your existing download logic using the code
+      // For example:
+      // fetchPhotos(code);
+    } else {
+      alert('Please enter a download code.');
+    }
+  }
     </script>
 </body>
 </html>

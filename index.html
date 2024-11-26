@@ -135,6 +135,22 @@
                 document.getElementById('codeModal').style.display = 'block';
             }
         }, 3000);
+
+
+        function submitCode() {
+    // Get the code from the input field
+    const code = document.getElementById('codeInput').value.trim();
+
+    if (code) {
+      // Save the code to localStorage
+      localStorage.setItem('downloadCode', code);
+
+      // Redirect to the download page
+      window.location.href = 'download.html';
+    } else {
+      alert('Please enter a valid code.');
+    }
+  }
     </script>
 </body>
 </html>
