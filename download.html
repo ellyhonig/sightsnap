@@ -95,7 +95,7 @@
   appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
   measurementId: "G-XLDW0L2DMS"
 };
-
+const baseURL = 'https://ellyhonig.github.io';
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const storage = firebase.storage();
@@ -179,7 +179,7 @@
                                 const { error } = await stripe.confirmPayment({
                                     elements,
                                     confirmParams: {
-                                        return_url: `${window.location.origin}/download.html?code=${code}&payment=success`,
+                                        return_url:`${baseURL}/download.html?code=${code}&payment=success`,
                                     },
                                 });
 
