@@ -1,27 +1,179 @@
+<!-- download.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Download Your Photos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-    <!-- Stripe.js -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        /* Container */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #222222;
+        }
+        /* Input Field */
+        .input-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.input-group input {
+    width: 90%; /* Adjust width for a better look on mobile */
+    max-width: 400px; /* Limit maximum width */
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+}
+        /* Photos */
+        .photo-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .photo-container img {
+            width: 100%;
+            border-radius: 8px;
+        }
+        /* Payment Form */
+        .payment-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .payment-container.active {
+            display: block;
+        }
+        .payment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #payment-element {
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+        }
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            color: #ffffff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: #218838;
+        }
+        /* Messages */
+        .message {
+            font-size: 14px;
+            color: #ff0000;
+            text-align: center;
+        }
+        /* Instructions */
+        .instructions {
+            font-size: 14px;
+            text-align: center;
+            color: #666666;
+            margin-top: 10px;
+        }
+        /* Footer Links */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .footer a {
+            font-size: 14px;
+            color: #007bff;
+            margin: 0 10px;
+        }
+        /* Media Queries */
+        @media (max-width: 500px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            .btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Input field for the code (hidden if code is autofilled) -->
-    <input type="text" id="codeInput" placeholder="Enter your download code" style="display: none;">
-    <!-- Container for photos -->
-    <div id="photoContainer"></div>
-    <!-- Payment container -->
-    <div id="payment-container" style="display: none;">
-        <form id="payment-form">
-            <div id="payment-element"></div>
-            <button id="buyButton">Unlock the rest: $5</button>
-            <div id="payment-message"></div>
-        </form>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Download Your Photos</h1>
+        </div>
+        <!-- Code Input -->
+        <div class="input-group" id="codeInputContainer">
+            <input type="text" id="codeInput" placeholder="Enter your download code">
+        </div>
+        <!-- Photo Container -->
+        <div class="photo-container" id="photoContainer"></div>
+        <!-- Payment Container -->
+        <div class="payment-container" id="payment-container">
+            <form id="payment-form" class="payment-form">
+                <div id="payment-element"></div>
+                <button id="buyButton" class="btn">Unlock the rest: $5</button>
+                <div id="payment-message" class="message"></div>
+            </form>
+        </div>
+        <!-- Instructions -->
+        <p class="instructions" id="saveInstructions" style="display: none;">Tap and hold the photo to save it to your Photos app.</p>
+        <!-- Footer Links -->
+        <div class="footer">
+            <a href="index.html">Reserve Page</a> |
+            <a href="photographer.html">Photographer Page</a>
+        </div>
     </div>
+    <!-- JavaScript -->
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -57,7 +209,7 @@
                 if (!paymentCompleted && urls.length > 1) {
                     // Show payment container if more than one photo
                     const paymentContainer = document.getElementById('payment-container');
-                    paymentContainer.style.display = 'block';
+                    paymentContainer.classList.add('active');
 
                     try {
                         // Call the Cloud Function to create payment intent
@@ -107,7 +259,7 @@
                                 } else if (paymentIntent && paymentIntent.status === 'succeeded') {
                                     paymentCompleted = true;
                                     displayPhotos(photoURLs, true);
-                                    document.getElementById('payment-container').style.display = 'none';
+                                    document.getElementById('payment-container').classList.remove('active');
                                 } else {
                                     console.log('Payment status:', paymentIntent.status);
                                 }
@@ -136,11 +288,12 @@
             imagesToShow.forEach(src => {
                 const img = document.createElement('img');
                 img.src = src;
-                img.style.maxWidth = '100%';
-                img.style.height = 'auto';
-                img.style.marginBottom = '10px';
                 photoContainer.appendChild(img);
             });
+            // Show save instructions if at least one photo is displayed
+            if (imagesToShow.length > 0) {
+                document.getElementById('saveInstructions').style.display = 'block';
+            }
         }
 
         window.onload = function() {
@@ -157,15 +310,16 @@
             if (code) {
                 // Autofill code and fetch photos
                 document.getElementById('codeInput').value = code;
-                document.getElementById('codeInput').style.display = 'none';
+                document.getElementById('codeInputContainer').style.display = 'none';
                 fetchPhotos(code);
             } else {
                 // Show code input field
-                document.getElementById('codeInput').style.display = 'block';
+                document.getElementById('codeInputContainer').style.display = 'block';
                 // Listen for code input
                 document.getElementById('codeInput').addEventListener('change', function() {
                     const enteredCode = this.value.trim();
                     if (enteredCode) {
+                        document.getElementById('codeInputContainer').style.display = 'none';
                         fetchPhotos(enteredCode);
                     }
                 });
