@@ -103,6 +103,7 @@
 
         const stripe = Stripe('pk_test_51QPR06DtGYmKpI3FyYGda4TaQfLsH3G9Ze3Ys29UDH6W9qWBYCTfXzFUXHMYntiCKvrW6ESN7x2kr4lj0DoUDQS500ZgLbqsbG');
         let elements;
+        let photoURLs = [];
 
         function displayPhotos(urls, showAll) {
             const photoContainer = document.getElementById('photoContainer');
@@ -127,13 +128,14 @@
                 const urlPromises = res.items.map(itemRef => itemRef.getDownloadURL());
                 const urls = await Promise.all(urlPromises);
                 if (urls.length > 0) {
+                    photoURLs = urls; // Store the URLs for later use
                     displayPhotos(urls, showAll);
-                    
+
                     if (!showAll) {
                         // Show payment container
                         const paymentContainer = document.getElementById('payment-container');
                         paymentContainer.classList.remove('hidden');
-                        
+
                         try {
                             // Call the Cloud Function using fetch
                             console.log('Calling createPaymentIntent...');
@@ -177,12 +179,12 @@
                                 buyButton.textContent = 'Processing...';
 
                                 try {
-                                    const returnURL = window.location.href.split('?')[0];
-                                    const { error } = await stripe.confirmPayment({
+                                    const { error, paymentIntent } = await stripe.confirmPayment({
                                         elements,
                                         confirmParams: {
-                                            return_url: `${returnURL}?code=${code}&payment=success`,
+                                            // Optionally pass additional parameters here
                                         },
+                                        redirect: 'if_required', // Prevents automatic redirection
                                     });
 
                                     if (error) {
@@ -190,6 +192,17 @@
                                         messageContainer.textContent = error.message;
                                         buyButton.disabled = false;
                                         buyButton.textContent = 'Pay $5';
+                                    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+                                        // Payment succeeded, show all photos
+                                        console.log('Payment succeeded:', paymentIntent);
+                                        fetchPhotos(code, true);
+                                        document.getElementById('payment-container').classList.add('hidden');
+                                    } else if (paymentIntent && paymentIntent.status === 'requires_action') {
+                                        // Handle additional authentication if required
+                                        console.log('Payment requires additional action:', paymentIntent);
+                                        // For test mode, you can simulate authentication
+                                    } else {
+                                        console.log('Payment status:', paymentIntent.status);
                                     }
                                 } catch (error) {
                                     console.error('Error:', error);
@@ -244,14 +257,8 @@
             const urlParams = new URLSearchParams(window.location.search);
             const codeFromURL = urlParams.get('code');
             if (codeFromURL) {
-                const paymentStatus = urlParams.get('payment');
-                if (paymentStatus === 'success') {
-                    fetchPhotos(codeFromURL, true);
-                    document.getElementById('codeInputContainer').classList.add('hidden');
-                } else {
-                    fetchPhotos(codeFromURL);
-                    document.getElementById('codeInputContainer').classList.add('hidden');
-                }
+                fetchPhotos(codeFromURL);
+                document.getElementById('codeInputContainer').classList.add('hidden');
             }
         };
     </script>
