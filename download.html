@@ -3,9 +3,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- (Your existing meta tags and styles remain unchanged) -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://maxcdn.bootstrapcdn.com https://www.gstatic.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://maxcdn.bootstrapcdn.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.gstatic.com; connect-src 'self' https://*.stripe.com https://*.gstatic.com https://*.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net; img-src 'self' https://firebasestorage.googleapis.com data: blob:;">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Download Your Photos</title>
+    <!-- (Your existing stylesheet links remain unchanged) -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://js.stripe.com/v3/"></script>
     <style>
@@ -87,25 +89,23 @@
     <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-            apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
+            apiKey: "AIzaSyC0VaYgD8YzgT1V-R4Crv2noMQF0TL-Ww",
             authDomain: "sight-snap.firebaseapp.com",
             projectId: "sight-snap",
-            storageBucket: "sight-snap.appspot.com",
+            storageBucket: "sight-snap.firebasestorage.app",
             messagingSenderId: "742529133150",
             appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
             measurementId: "G-XLDW0L2DMS"
         };
-
+        const baseURL = 'https://ellyhonig.github.io';
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const storage = firebase.storage();
         const functions = firebase.functions();
 
-        const stripe = Stripe('YOUR_STRIPE_PUBLISHABLE_KEY');
+        const stripe = Stripe('pk_test_51QPR06DtGYmKpI3FyYGda4TaQfLsH3G9Ze3Ys29UDH6W9qWBYCTfXzFUXHMYntiCKvrW6ESN7x2kr4lj0DoUDQS500ZgLbqsbG');
         let elements;
-        let photoURLs = [];
-        let paymentCompleted = false;
-        let currentCode = '';
+        let photoURLs = []; // Added to store photo URLs
 
         function displayPhotos(urls, showAll) {
             const photoContainer = document.getElementById('photoContainer');
@@ -124,106 +124,98 @@
         }
 
         async function fetchPhotos(code) {
-            currentCode = code; // Store the current code
             const listRef = storage.ref(`photos/${code}`);
             try {
                 const res = await listRef.listAll();
                 const urlPromises = res.items.map(itemRef => itemRef.getDownloadURL());
                 const urls = await Promise.all(urlPromises);
                 if (urls.length > 0) {
-                    photoURLs = urls; // Store the URLs for later use
-                    displayPhotos(photoURLs, paymentCompleted);
+                    photoURLs = urls; // Store the URLs
+                    displayPhotos(urls, false);
+                    
+                    // Show payment container
+                    const paymentContainer = document.getElementById('payment-container');
+                    paymentContainer.classList.remove('hidden');
+                    
+                    try {
+                        // Call the Cloud Function using fetch
+                        console.log('Calling createPaymentIntent...');
+                        const response = await fetch('https://us-central1-sight-snap.cloudfunctions.net/createPaymentIntent', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        });
+                        const result = await response.json();
+                        console.log('Result:', result);
 
-                    if (!paymentCompleted) {
-                        // Show payment container
-                        const paymentContainer = document.getElementById('payment-container');
-                        paymentContainer.classList.remove('hidden');
+                        if (!result.clientSecret) {
+                            throw new Error('Invalid response from server');
+                        }
 
-                        try {
-                            // Call the Cloud Function using fetch
-                            console.log('Calling createPaymentIntent...');
-                            const response = await fetch('https://us-central1-sight-snap.cloudfunctions.net/createPaymentIntent', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
+                        const clientSecret = result.clientSecret;
+                        console.log('Got client secret:', clientSecret);
+
+                        // Initialize Stripe Elements with the clientSecret
+                        elements = stripe.elements({
+                            clientSecret,
+                            appearance: {
+                                theme: 'stripe',
+                                variables: {
+                                    colorPrimary: '#28a745',
                                 },
-                            });
-                            const result = await response.json();
-                            console.log('Result:', result);
+                            },
+                        });
 
-                            if (!result.clientSecret) {
-                                throw new Error('Invalid response from server');
-                            }
+                        const paymentElement = elements.create('payment');
+                        paymentElement.mount('#payment-element');
 
-                            const clientSecret = result.clientSecret;
-                            console.log('Got client secret:', clientSecret);
+                        // Handle form submission
+                        const form = document.getElementById('payment-form');
+                        form.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            
+                            const buyButton = document.getElementById('buyButton');
+                            buyButton.disabled = true;
+                            buyButton.textContent = 'Processing...';
 
-                            // Initialize Stripe Elements with the clientSecret
-                            elements = stripe.elements({
-                                clientSecret,
-                                appearance: {
-                                    theme: 'stripe',
-                                    variables: {
-                                        colorPrimary: '#28a745',
+                            try {
+                                const { error, paymentIntent } = await stripe.confirmPayment({
+                                    elements,
+                                    confirmParams: {
+                                        // Removed return_url to prevent redirect
                                     },
-                                },
-                            });
+                                    redirect: 'if_required', // Prevent automatic redirection
+                                });
 
-                            const paymentElement = elements.create('payment');
-                            paymentElement.mount('#payment-element');
-
-                            // Handle form submission
-                            const form = document.getElementById('payment-form');
-                            form.addEventListener('submit', async (e) => {
-                                e.preventDefault();
-                                
-                                const buyButton = document.getElementById('buyButton');
-                                buyButton.disabled = true;
-                                buyButton.textContent = 'Processing...';
-
-                                try {
-                                    const { error, paymentIntent } = await stripe.confirmPayment({
-                                        elements,
-                                        confirmParams: {},
-                                        redirect: 'if_required', // Prevents automatic redirection
-                                    });
-
-                                    if (error) {
-                                        const messageContainer = document.getElementById('payment-message');
-                                        messageContainer.textContent = error.message;
-                                        buyButton.disabled = false;
-                                        buyButton.textContent = 'Pay $5';
-                                    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-                                        // Payment succeeded, show all photos
-                                        console.log('Payment succeeded:', paymentIntent);
-                                        paymentCompleted = true;
-                                        displayPhotos(photoURLs, true);
-                                        document.getElementById('payment-container').classList.add('hidden');
-                                        document.getElementById('downloadStatus').textContent = 'Payment successful! Enjoy your photos.';
-                                    } else if (paymentIntent && paymentIntent.status === 'requires_action') {
-                                        // Handle additional authentication if required
-                                        console.log('Payment requires additional action:', paymentIntent);
-                                        // For test mode, you can simulate authentication
-                                    } else {
-                                        console.log('Payment status:', paymentIntent.status);
-                                    }
-                                } catch (error) {
-                                    console.error('Error:', error);
+                                if (error) {
                                     const messageContainer = document.getElementById('payment-message');
-                                    messageContainer.textContent = 'Payment failed. Please try again.';
+                                    messageContainer.textContent = error.message;
+                                    buyButton.disabled = false;
+                                    buyButton.textContent = 'Pay $5';
+                                } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+                                    // Payment succeeded, show all photos
+                                    displayPhotos(photoURLs, true);
+                                    document.getElementById('payment-container').classList.add('hidden');
+                                    document.getElementById('downloadStatus').textContent = 'Payment successful! Enjoy your photos.';
+                                } else {
+                                    // Handle other statuses
+                                    console.log('Payment status:', paymentIntent.status);
                                     buyButton.disabled = false;
                                     buyButton.textContent = 'Pay $5';
                                 }
-                            });
-                        } catch (error) {
-                            console.error('Detailed error:', error);
-                            document.getElementById('payment-message').textContent = 
-                                'Error setting up payment. Please try again.';
-                        }
-                    } else {
-                        // Hide payment container
-                        const paymentContainer = document.getElementById('payment-container');
-                        paymentContainer.classList.add('hidden');
+                            } catch (error) {
+                                console.error('Error:', error);
+                                const messageContainer = document.getElementById('payment-message');
+                                messageContainer.textContent = 'Payment failed. Please try again.';
+                                buyButton.disabled = false;
+                                buyButton.textContent = 'Pay $5';
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Detailed error:', error);
+                        document.getElementById('payment-message').textContent = 
+                            'Error setting up payment. Please try again.';
                     }
                 } else {
                     document.getElementById('downloadStatus').textContent = 'No photos available for this code.';
