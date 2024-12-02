@@ -87,7 +87,7 @@
     <script>
         // Your Firebase configuration details
         const firebaseConfig = {
-            apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
+            apiKey: "YOUR_FIREBASE_API_KEY",
             authDomain: "sight-snap.firebaseapp.com",
             projectId: "sight-snap",
             storageBucket: "sight-snap.appspot.com",
@@ -101,9 +101,11 @@
         const storage = firebase.storage();
         const functions = firebase.functions();
 
-        const stripe = Stripe('pk_test_51QPR06DtGYmKpI3FyYGda4TaQfLsH3G9Ze3Ys29UDH6W9qWBYCTfXzFUXHMYntiCKvrW6ESN7x2kr4lj0DoUDQS500ZgLbqsbG');
+        const stripe = Stripe('YOUR_STRIPE_PUBLISHABLE_KEY');
         let elements;
         let photoURLs = [];
+        let paymentCompleted = false;
+        let currentCode = '';
 
         function displayPhotos(urls, showAll) {
             const photoContainer = document.getElementById('photoContainer');
@@ -121,7 +123,8 @@
             document.getElementById('saveInstructions').classList.remove('hidden');
         }
 
-        async function fetchPhotos(code, showAll = false) {
+        async function fetchPhotos(code) {
+            currentCode = code; // Store the current code
             const listRef = storage.ref(`photos/${code}`);
             try {
                 const res = await listRef.listAll();
@@ -129,9 +132,9 @@
                 const urls = await Promise.all(urlPromises);
                 if (urls.length > 0) {
                     photoURLs = urls; // Store the URLs for later use
-                    displayPhotos(urls, showAll);
+                    displayPhotos(photoURLs, paymentCompleted);
 
-                    if (!showAll) {
+                    if (!paymentCompleted) {
                         // Show payment container
                         const paymentContainer = document.getElementById('payment-container');
                         paymentContainer.classList.remove('hidden');
@@ -181,9 +184,7 @@
                                 try {
                                     const { error, paymentIntent } = await stripe.confirmPayment({
                                         elements,
-                                        confirmParams: {
-                                            // Optionally pass additional parameters here
-                                        },
+                                        confirmParams: {},
                                         redirect: 'if_required', // Prevents automatic redirection
                                     });
 
@@ -195,8 +196,10 @@
                                     } else if (paymentIntent && paymentIntent.status === 'succeeded') {
                                         // Payment succeeded, show all photos
                                         console.log('Payment succeeded:', paymentIntent);
-                                        fetchPhotos(code, true);
+                                        paymentCompleted = true;
+                                        displayPhotos(photoURLs, true);
                                         document.getElementById('payment-container').classList.add('hidden');
+                                        document.getElementById('downloadStatus').textContent = 'Payment successful! Enjoy your photos.';
                                     } else if (paymentIntent && paymentIntent.status === 'requires_action') {
                                         // Handle additional authentication if required
                                         console.log('Payment requires additional action:', paymentIntent);
@@ -231,17 +234,8 @@
             }
         }
 
-        // Combine all initialization code inside a single window.onload
+        // Initialization code
         window.onload = function() {
-            // Retrieve the code from localStorage
-            const storedCode = localStorage.getItem('downloadCode');
-
-            if (storedCode) {
-                document.getElementById('codeInput').value = storedCode;
-                localStorage.removeItem('downloadCode');
-                document.getElementById('downloadBtn').click();
-            }
-
             // Event listener for the download button
             document.getElementById('downloadBtn').addEventListener('click', function() {
                 const codeInput = document.getElementById('codeInput').value.trim();
@@ -252,14 +246,6 @@
                     document.getElementById('downloadStatus').textContent = 'Please enter a valid code.';
                 }
             });
-
-            // Check if code is passed in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeFromURL = urlParams.get('code');
-            if (codeFromURL) {
-                fetchPhotos(codeFromURL);
-                document.getElementById('codeInputContainer').classList.add('hidden');
-            }
         };
     </script>
 </body>
