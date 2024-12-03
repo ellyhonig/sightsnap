@@ -1,105 +1,171 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Get Your Photo Taken</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS for responsive design -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <style>
-        /* Your existing CSS styles */
+        /* Base Styles */
         body {
-            background-color: #f7f7f7;
+            background-color: #ffffff;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
             margin: 0;
             padding: 0;
         }
+
         .container {
-            margin-top: 20px;
-            max-width: 500px;
-        }
-        .hidden {
-            display: none;
-        }
-        #reserveBtn {
             margin-top: 50px;
+            max-width: 500px;
+            text-align: center;
         }
+
+        /* Main Button */
+        #reserveBtn {
+            font-size: 6vw;
+            padding: 20px;
+            width: 100%;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #reserveBtn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Queue Messages */
         #queuePlace, #waitingMessage {
-            font-size: 1.5em;
+            font-size: 4vw;
             margin-top: 20px;
         }
+
+        /* Modal Styles */
         #codeModal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.97);
             display: none;
+            align-items: center;
+            justify-content: center;
             z-index: 1000;
-            overflow: auto;
         }
+
         #codeModalContent {
-            position: relative;
-            top: 50%;
-            transform: translateY(-50%);
             text-align: center;
             padding: 20px;
         }
+
         #instructionText {
             font-size: 5vw;
-            color: black;
+            color: #333;
             margin-bottom: 20px;
         }
+
         #code {
-            color: red;
+            color: #d9534f;
             font-size: 20vw;
             font-weight: bold;
+            font-family: 'Roboto', sans-serif;
         }
-        .nav-buttons {
+
+        /* Buttons inside Modal */
+        .btn-download {
+            font-size: 5vw;
+            padding: 15px;
+            width: 100%;
+            background-color: #28a745;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
             margin-top: 20px;
+            cursor: pointer;
         }
-        .nav-buttons a {
-            margin: 5px;
+
+        .btn-download:hover {
+            background-color: #218838;
+        }
+
+        /* Photographer Link */
+        .btn-photographer {
+            font-size: 4vw;
+            color: #007bff;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .btn-photographer:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .btn-link.photographer-link {
+    font-size: 2vw; /* Smaller font size */
+    color: #555; /* Subtle color */
+    margin-top: 10px;
+}
+
+        /* Hide elements initially */
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container text-center">
-        <h1>Get Your Photo Taken</h1>
+
+    <div class="container">
+        <!-- Main Action Button -->
+        <button id="reserveBtn">Click to Get Your Photo Taken</button>
+
+        <!-- Queue Messages -->
         <p id="queuePlace" class="hidden">You are #<span id="place">0</span> in line.</p>
         <p id="waitingMessage" class="hidden">Your photographer will be available soon.</p>
-        <button id="reserveBtn" class="btn btn-primary mt-4">Get Your Photo Taken</button>
-        <div class="nav-buttons">
-            <a href="download.html" class="btn btn-link">Go to Download Page</a>
-            <a href="photographer.html" class="btn btn-link">Go to Photographer Page</a>
-        </div>
+
+        <!-- Photographer Page Link -->
+        <a href="photographer.html" class="btn-photographer photographer-link">Photographer Page</a>
     </div>
+
+    <!-- Code Modal -->
     <div id="codeModal">
         <div id="codeModalContent">
             <div id="instructionText">Hold this up for your photographer to find you</div>
             <div id="code"></div>
-            <div class="nav-buttons">
-                <a href="download.html" class="btn btn-link">Download Page</a>
-                <a href="photographer.html" class="btn btn-link">Photographer Page</a>
-            </div>
+
+            <!-- Get Pictures Button -->
+            <button id="getPicturesBtn" class="btn-download">Click here to get your pictures</button>
+
+            <!-- Photographer Page Link -->
+            <a href="photographer.html" class="btn-photographer photographer-link">Photographer Page</a>
         </div>
     </div>
-    <!-- Firebase SDK -->
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script>
-        // Your Firebase configuration details
-        const firebaseConfig = {
-  apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
-  authDomain: "sight-snap.firebaseapp.com",
-  projectId: "sight-snap",
-  storageBucket: "sight-snap.appspot.com",
-  messagingSenderId: "742529133150",
-  appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
-  measurementId: "G-XLDW0L2DMS"
-};
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration (replace with your own config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
+            authDomain: "sight-snap.firebaseapp.com",
+            projectId: "sight-snap",
+            storageBucket: "sight-snap.appspot.com",
+            messagingSenderId: "742529133150",
+            appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
+            measurementId: "G-XLDW0L2DMS"
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -107,50 +173,59 @@
 
         let userCode = '';
 
+        // Clear userCode on page load to prevent modal from showing up immediately
+        window.onload = function() {
+            localStorage.removeItem('downloadCode');
+            userCode = '';
+        };
+
+        // Event listener for the main button
         document.getElementById('reserveBtn').addEventListener('click', async function() {
+            // Generate a random 4-digit code
             userCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+            // Add the code to the Firestore queue
             await db.collection("queue").add({ code: userCode, timestamp: Date.now() });
+
+            // Store the code in localStorage
             localStorage.setItem('downloadCode', userCode);
+
+            // Display the code in the modal
             document.getElementById('code').textContent = userCode;
-            document.getElementById('codeModal').style.display = 'block';
+
+            // Show the modal
+            document.getElementById('codeModal').style.display = 'flex';
+
+            // Disable the main button to prevent multiple submissions
             this.disabled = true;
         });
 
-        // Periodically check queue status
+        // Event listener for the "Get Your Pictures" button
+        document.getElementById('getPicturesBtn').addEventListener('click', function() {
+            window.location.href = 'download.html';
+        });
+
+        // Periodically check the user's position in the queue
         setInterval(async function() {
             if (!userCode) return;
+
             const querySnapshot = await db.collection("queue").orderBy("timestamp").get();
             const queue = querySnapshot.docs.map(doc => doc.data().code);
             const position = queue.indexOf(userCode) + 1;
 
             if (position > 1) {
+                // User is in the queue but not first
                 document.getElementById('place').textContent = position;
                 document.getElementById('queuePlace').classList.remove('hidden');
                 document.getElementById('waitingMessage').classList.remove('hidden');
                 document.getElementById('codeModal').style.display = 'none';
             } else if (position === 1) {
+                // User is first in the queue
                 document.getElementById('queuePlace').classList.add('hidden');
                 document.getElementById('waitingMessage').classList.add('hidden');
-                document.getElementById('code').textContent = userCode;
-                document.getElementById('codeModal').style.display = 'block';
+                document.getElementById('codeModal').style.display = 'flex';
             }
         }, 3000);
-
-
-        function submitCode() {
-    // Get the code from the input field
-    const code = document.getElementById('codeInput').value.trim();
-
-    if (code) {
-      // Save the code to localStorage
-      localStorage.setItem('downloadCode', code);
-
-      // Redirect to the download page
-      window.location.href = 'download.html';
-    } else {
-      alert('Please enter a valid code.');
-    }
-  }
     </script>
 </body>
 </html>
