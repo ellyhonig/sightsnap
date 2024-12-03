@@ -74,23 +74,35 @@
             await db.collection("queue").doc(id).delete();
         }
 
+        // Function to set up the UI with the current code
+        function setupUIWithCurrentCode() {
+            if (currentCode) {
+                document.getElementById('queueCode').textContent = currentCode;
+                document.getElementById('assignedCode').classList.remove('hidden');
+                document.getElementById('upload').classList.remove('hidden');
+                document.getElementById('uploadBtn').classList.remove('hidden');
+            }
+        }
+
+        // Event listener for the "Get Next Code" button
         document.getElementById('availableBtn').addEventListener('click', async function() {
             const queue = await getQueue();
             if (queue.length > 0) {
                 const firstInQueue = queue[0];
                 currentCode = firstInQueue.code;
                 currentDocId = firstInQueue.id;
-                document.getElementById('queueCode').textContent = currentCode;
-                document.getElementById('assignedCode').classList.remove('hidden');
-                document.getElementById('upload').classList.remove('hidden');
-                document.getElementById('uploadBtn').classList.remove('hidden');
                 // Remove the person from the queue
                 await removeFromQueue(currentDocId);
+                // Store currentCode in localStorage
+                localStorage.setItem('currentCode', currentCode);
+                // Set up the UI
+                setupUIWithCurrentCode();
             } else {
                 alert('No one in the queue.');
             }
         });
 
+        // Event listener for the "Upload Photos" button
         document.getElementById('uploadBtn').addEventListener('click', async function() {
             if (!currentCode) {
                 alert('No code assigned. Please get the next code first.');
@@ -113,6 +125,8 @@
                     document.getElementById('upload').classList.add('hidden');
                     document.getElementById('uploadBtn').classList.add('hidden');
                     document.getElementById('upload').value = '';
+                    // Clear currentCode from localStorage
+                    localStorage.removeItem('currentCode');
                     currentCode = '';
                     currentDocId = '';
                 } catch (error) {
@@ -135,6 +149,14 @@
                 alert('Queue is already empty.');
             }
         });
+
+        // On page load, retrieve the code from localStorage and set up the UI
+        window.onload = function() {
+            currentCode = localStorage.getItem('currentCode') || '';
+            if (currentCode) {
+                setupUIWithCurrentCode();
+            }
+        };
     </script>
 </body>
 </html>

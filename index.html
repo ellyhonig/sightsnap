@@ -175,8 +175,19 @@
 
         // Clear userCode on page load to prevent modal from showing up immediately
         window.onload = function() {
-            localStorage.removeItem('downloadCode');
-            userCode = '';
+            // Retrieve the code from localStorage if it exists
+            userCode = localStorage.getItem('downloadCode') || '';
+
+            if (userCode) {
+                // Display the code in the modal
+                document.getElementById('code').textContent = userCode;
+
+                // Show the modal
+                document.getElementById('codeModal').style.display = 'flex';
+
+                // Disable the main button to prevent multiple submissions
+                document.getElementById('reserveBtn').disabled = true;
+            }
         };
 
         // Event listener for the main button
@@ -202,6 +213,9 @@
 
         // Event listener for the "Get Your Pictures" button
         document.getElementById('getPicturesBtn').addEventListener('click', function() {
+            // Clear the code from localStorage
+            localStorage.removeItem('downloadCode');
+            // Redirect to the download page
             window.location.href = 'download.html';
         });
 
