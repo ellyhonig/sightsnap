@@ -92,6 +92,7 @@
             border-radius: 5px;
             margin-top: 20px;
             cursor: pointer;
+            display: none; /* Initially hidden */
         }
 
         .btn-download:hover {
@@ -112,10 +113,10 @@
             text-decoration: underline;
         }
         .btn-link.photographer-link {
-    font-size: 2vw; /* Smaller font size */
-    color: #555; /* Subtle color */
-    margin-top: 10px;
-}
+            font-size: 2vw; /* Smaller font size */
+            color: #555; /* Subtle color */
+            margin-top: 10px;
+        }
 
         /* Hide elements initially */
         .hidden {
@@ -134,7 +135,6 @@
         <p id="waitingMessage" class="hidden">Your photographer will be available soon.</p>
 
         <!-- Photographer Page Link -->
-        <a href="photographer.html" class="btn-photographer photographer-link">Photographer Page</a>
     </div>
 
     <!-- Code Modal -->
@@ -147,13 +147,14 @@
             <button id="getPicturesBtn" class="btn-download">Click here to get your pictures</button>
 
             <!-- Photographer Page Link -->
-            <a href="photographer.html" class="btn-photographer photographer-link">Photographer Page</a>
+           
         </div>
     </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
     <script>
         // Firebase configuration (replace with your own config)
@@ -161,7 +162,7 @@
             apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
             authDomain: "sight-snap.firebaseapp.com",
             projectId: "sight-snap",
-            storageBucket: "sight-snap.appspot.com",
+            storageBucket: "sight-snap.firebasestorage.app",
             messagingSenderId: "742529133150",
             appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
             measurementId: "G-XLDW0L2DMS"
@@ -170,17 +171,38 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         let userCode = '';
 
+        // Check if photos exist for a given code
+        async function photosExistForCode(code) {
+            try {
+                const listRef = storage.ref(`photos/${code}`);
+                const result = await listRef.listAll();
+                return result.items.length > 0;
+            } catch (error) {
+                console.error("Error checking photos:", error);
+                return false;
+            }
+        }
+
         // Clear userCode on page load to prevent modal from showing up immediately
-        window.onload = function() {
+        window.onload = async function() {
             // Retrieve the code from localStorage if it exists
             userCode = localStorage.getItem('downloadCode') || '';
 
             if (userCode) {
                 // Display the code in the modal
                 document.getElementById('code').textContent = userCode;
+
+                // Check if photos exist for this code
+                const hasPhotos = await photosExistForCode(userCode);
+                if (hasPhotos) {
+                    document.getElementById('getPicturesBtn').style.display = 'block';
+                } else {
+                    document.getElementById('getPicturesBtn').style.display = 'none';
+                }
 
                 // Show the modal
                 document.getElementById('codeModal').style.display = 'flex';
@@ -204,6 +226,14 @@
             // Display the code in the modal
             document.getElementById('code').textContent = userCode;
 
+            // Check if photos exist for this code (right after generation, likely none)
+            const hasPhotos = await photosExistForCode(userCode);
+            if (hasPhotos) {
+                document.getElementById('getPicturesBtn').style.display = 'block';
+            } else {
+                document.getElementById('getPicturesBtn').style.display = 'none';
+            }
+
             // Show the modal
             document.getElementById('codeModal').style.display = 'flex';
 
@@ -216,10 +246,10 @@
             // Clear the code from localStorage
             localStorage.removeItem('downloadCode');
             // Redirect to the download page
-            window.location.href = 'download.html';
+            window.location.href = 'download.html?code=' + encodeURIComponent(userCode);
         });
 
-        // Periodically check the user's position in the queue
+        // Periodically check the user's position in the queue and also if photos are uploaded
         setInterval(async function() {
             if (!userCode) return;
 
@@ -237,6 +267,15 @@
                 // User is first in the queue
                 document.getElementById('queuePlace').classList.add('hidden');
                 document.getElementById('waitingMessage').classList.add('hidden');
+                
+                // Check if photos now exist before showing the modal again
+                const hasPhotos = await photosExistForCode(userCode);
+                if (hasPhotos) {
+                    document.getElementById('getPicturesBtn').style.display = 'block';
+                } else {
+                    document.getElementById('getPicturesBtn').style.display = 'none';
+                }
+
                 document.getElementById('codeModal').style.display = 'flex';
             }
         }, 3000);
