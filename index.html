@@ -27,6 +27,21 @@
             text-align: center;
         }
 
+        /* Input for Phone Number */
+        #phoneNumber {
+            font-size: 4vw;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+        #phoneNumber:focus {
+            border-color: #007bff;
+        }
+
         /* Main Button */
         #reserveBtn {
             font-size: 6vw;
@@ -126,159 +141,226 @@
 </head>
 <body>
 
-    <div class="container">
-        <!-- Main Action Button -->
-        <button id="reserveBtn">Click to Get Your Photo Taken</button>
+<div class="container">
+    <!-- Phone Number Input -->
+    <input 
+        type="tel" 
+        id="phoneNumber" 
+        placeholder="Enter your phone number"
+        required
+    />
 
-        <!-- Queue Messages -->
-        <p id="queuePlace" class="hidden">You are #<span id="place">0</span> in line.</p>
-        <p id="waitingMessage" class="hidden">Your photographer will be available soon.</p>
+    <!-- Main Action Button -->
+    <button id="reserveBtn">Click to Get Your Photo Taken</button>
 
-        <!-- Photographer Page Link -->
+    <!-- Queue Messages -->
+    <p id="queuePlace" class="hidden">You are #<span id="place">0</span> in line.</p>
+    <p id="waitingMessage" class="hidden">Your photographer will be available soon.</p>
+</div>
+
+<!-- Code Modal -->
+<div id="codeModal">
+    <div id="codeModalContent">
+        <div id="instructionText">Hold this up for your photographer to find you</div>
+        <div id="code"></div>
+
+        <!-- Get Pictures Button -->
+        <button id="getPicturesBtn" class="btn-download">Click here to get your pictures</button>
     </div>
+</div>
 
-    <!-- Code Modal -->
-    <div id="codeModal">
-        <div id="codeModalContent">
-            <div id="instructionText">Hold this up for your photographer to find you</div>
-            <div id="code"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
-            <!-- Get Pictures Button -->
-            <button id="getPicturesBtn" class="btn-download">Click here to get your pictures</button>
+<script>
+    // Firebase configuration (replace with your own config)
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
+        authDomain: "sight-snap.firebaseapp.com",
+        projectId: "sight-snap",
+        storageBucket: "sight-snap.firebasestorage.app",
+        messagingSenderId: "742529133150",
+        appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
+        measurementId: "G-XLDW0L2DMS"
+    };
 
-            <!-- Photographer Page Link -->
-           
-        </div>
-    </div>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    let userCode = '';
 
-    <script>
-        // Firebase configuration (replace with your own config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0VaYgD8YzgTz1V-R4Crv2noMQF0TL-Ww",
-            authDomain: "sight-snap.firebaseapp.com",
-            projectId: "sight-snap",
-            storageBucket: "sight-snap.firebasestorage.app",
-            messagingSenderId: "742529133150",
-            appId: "1:742529133150:web:8ab1a667b53703c9cee2cf",
-            measurementId: "G-XLDW0L2DMS"
-        };
+    /**
+     * Check if photos exist for a given code.
+     */
+    async function photosExistForCode(code) {
+        try {
+            const listRef = storage.ref(`photos/${code}`);
+            const result = await listRef.listAll();
+            return result.items.length > 0;
+        } catch (error) {
+            console.error("Error checking photos:", error);
+            return false;
+        }
+    }
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+    /**
+     * Check if a code exists in the "queue" collection.
+     */
+    async function codeExistsInQueue(code) {
+        try {
+            const snapshot = await db.collection("queue")
+                .where("code", "==", code)
+                .limit(1)
+                .get();
+            return !snapshot.empty;
+        } catch (error) {
+            console.error("Error checking code in queue:", error);
+            return false;
+        }
+    }
 
-        let userCode = '';
+    /**
+     * On page load:
+     * 1. See if there's a code in localStorage.
+     * 2. If code is found, check if photos exist.
+     * 3. If photos exist, redirect to download page immediately.
+     * 4. If photos do not exist, check if code is still in queue.
+     *    - If code not in queue, remove from localStorage.
+     *    - If code is in queue, proceed with existing logic (show or hide modal).
+     */
+    window.onload = async function() {
+        userCode = localStorage.getItem('downloadCode') || '';
 
-        // Check if photos exist for a given code
-        async function photosExistForCode(code) {
-            try {
-                const listRef = storage.ref(`photos/${code}`);
-                const result = await listRef.listAll();
-                return result.items.length > 0;
-            } catch (error) {
-                console.error("Error checking photos:", error);
-                return false;
+        if (userCode) {
+            const hasPhotos = await photosExistForCode(userCode);
+            if (hasPhotos) {
+                // If photos exist, go straight to download
+                window.location.href = 'download.html?code=' + encodeURIComponent(userCode);
+                return;
+            } else {
+                // Check if code is still in queue
+                const inQueue = await codeExistsInQueue(userCode);
+                if (!inQueue) {
+                    // Remove from localStorage because it's stale
+                    localStorage.removeItem('downloadCode');
+                    userCode = '';
+                }
             }
         }
 
-        // Clear userCode on page load to prevent modal from showing up immediately
-        window.onload = async function() {
-            // Retrieve the code from localStorage if it exists
-            userCode = localStorage.getItem('downloadCode') || '';
-
-            if (userCode) {
-                // Display the code in the modal
-                document.getElementById('code').textContent = userCode;
-
-                // Check if photos exist for this code
-                const hasPhotos = await photosExistForCode(userCode);
-                if (hasPhotos) {
-                    document.getElementById('getPicturesBtn').style.display = 'block';
-                } else {
-                    document.getElementById('getPicturesBtn').style.display = 'none';
-                }
-
-                // Show the modal
-                document.getElementById('codeModal').style.display = 'flex';
-
-                // Disable the main button to prevent multiple submissions
-                document.getElementById('reserveBtn').disabled = true;
-            }
-        };
-
-        // Event listener for the main button
-        document.getElementById('reserveBtn').addEventListener('click', async function() {
-            // Generate a random 4-digit code
-            userCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-            // Add the code to the Firestore queue
-            await db.collection("queue").add({ code: userCode, timestamp: Date.now() });
-
-            // Store the code in localStorage
-            localStorage.setItem('downloadCode', userCode);
-
-            // Display the code in the modal
+        // If we still have a code after that check, show modal & queue logic
+        if (userCode) {
             document.getElementById('code').textContent = userCode;
-
-            // Check if photos exist for this code (right after generation, likely none)
+            // Check if photos exist again for the button
             const hasPhotos = await photosExistForCode(userCode);
-            if (hasPhotos) {
-                document.getElementById('getPicturesBtn').style.display = 'block';
-            } else {
-                document.getElementById('getPicturesBtn').style.display = 'none';
-            }
+            document.getElementById('getPicturesBtn').style.display = hasPhotos ? 'block' : 'none';
 
             // Show the modal
             document.getElementById('codeModal').style.display = 'flex';
+            document.getElementById('reserveBtn').disabled = true;
+            document.getElementById('phoneNumber').disabled = true;
+        }
+    };
 
-            // Disable the main button to prevent multiple submissions
-            this.disabled = true;
+    /**
+     * Main button click:
+     * 1. Validate phone number.
+     * 2. Generate code.
+     * 3. Add to 'queue' collection.
+     * 4. Also add to 'customer_log' collection.
+     * 5. Show code in modal, store in localStorage.
+     */
+    document.getElementById('reserveBtn').addEventListener('click', async function() {
+        const phoneInput = document.getElementById('phoneNumber');
+        const phoneNumber = phoneInput.value.trim();
+
+        // Basic check to ensure user has entered something
+        if (!phoneNumber) {
+            alert("Please enter a valid phone number.");
+            return;
+        }
+
+        // Generate a random 4-digit code
+        userCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Add the code/phoneNumber to the Firestore queue
+        await db.collection("queue").add({
+            code: userCode,
+            phoneNumber: phoneNumber,
+            timestamp: Date.now()
         });
 
-        // Event listener for the "Get Your Pictures" button
-        document.getElementById('getPicturesBtn').addEventListener('click', function() {
-            // Clear the code from localStorage
-            localStorage.removeItem('downloadCode');
-            // Redirect to the download page
-            window.location.href = 'download.html?code=' + encodeURIComponent(userCode);
+        // Also log to 'customer_log' with the same info
+        await db.collection("customer_log").add({
+            code: userCode,
+            phoneNumber: phoneNumber,
+            timestamp: Date.now()
         });
 
-        // Periodically check the user's position in the queue and also if photos are uploaded
-        setInterval(async function() {
-            if (!userCode) return;
+        // Store the code in localStorage
+        localStorage.setItem('downloadCode', userCode);
 
-            const querySnapshot = await db.collection("queue").orderBy("timestamp").get();
-            const queue = querySnapshot.docs.map(doc => doc.data().code);
-            const position = queue.indexOf(userCode) + 1;
+        // Display the code in the modal
+        document.getElementById('code').textContent = userCode;
 
-            if (position > 1) {
-                // User is in the queue but not first
-                document.getElementById('place').textContent = position;
-                document.getElementById('queuePlace').classList.remove('hidden');
-                document.getElementById('waitingMessage').classList.remove('hidden');
-                document.getElementById('codeModal').style.display = 'none';
-            } else if (position === 1) {
-                // User is first in the queue
-                document.getElementById('queuePlace').classList.add('hidden');
-                document.getElementById('waitingMessage').classList.add('hidden');
-                
-                // Check if photos now exist before showing the modal again
-                const hasPhotos = await photosExistForCode(userCode);
-                if (hasPhotos) {
-                    document.getElementById('getPicturesBtn').style.display = 'block';
-                } else {
-                    document.getElementById('getPicturesBtn').style.display = 'none';
-                }
+        // Check if photos exist for this code (right after generation, likely none)
+        const hasPhotos = await photosExistForCode(userCode);
+        document.getElementById('getPicturesBtn').style.display = hasPhotos ? 'block' : 'none';
 
-                document.getElementById('codeModal').style.display = 'flex';
-            }
-        }, 3000);
-    </script>
+        // Show the modal
+        document.getElementById('codeModal').style.display = 'flex';
+
+        // Disable main button & phone input to prevent multiple submissions
+        this.disabled = true;
+        phoneInput.disabled = true;
+    });
+
+    /**
+     * "Get Your Pictures" button click:
+     * Clears localStorage (since user is going to get photos)
+     * then redirects to download page.
+     */
+    document.getElementById('getPicturesBtn').addEventListener('click', function() {
+        // Clear the code from localStorage
+        localStorage.removeItem('downloadCode');
+        // Redirect to the download page
+        window.location.href = 'download.html?code=' + encodeURIComponent(userCode);
+    });
+
+    /**
+     * Periodically check the user's position in the queue
+     * and also if photos are uploaded.
+     */
+    setInterval(async function() {
+        if (!userCode) return;
+
+        // Fetch the entire queue (ordered by timestamp)
+        const querySnapshot = await db.collection("queue").orderBy("timestamp").get();
+        const queueCodes = querySnapshot.docs.map(doc => doc.data().code);
+        const position = queueCodes.indexOf(userCode) + 1;
+
+        if (position > 1) {
+            // User is in the queue but not first
+            document.getElementById('place').textContent = position;
+            document.getElementById('queuePlace').classList.remove('hidden');
+            document.getElementById('waitingMessage').classList.remove('hidden');
+            document.getElementById('codeModal').style.display = 'none';
+        } else if (position === 1) {
+            // User is first in the queue
+            document.getElementById('queuePlace').classList.add('hidden');
+            document.getElementById('waitingMessage').classList.add('hidden');
+
+            // Check if photos now exist before showing the modal again
+            const hasPhotos = await photosExistForCode(userCode);
+            document.getElementById('getPicturesBtn').style.display = hasPhotos ? 'block' : 'none';
+
+            document.getElementById('codeModal').style.display = 'flex';
+        }
+    }, 3000);
+</script>
 </body>
 </html>

@@ -1,6 +1,8 @@
+
 {
   "functions": {
-    "predeploy": [],
-    "source": "functions"
+    "source": "functions",
+    "runtime": "nodejs18",
+    "platform": "gcfv1"
   }
 }

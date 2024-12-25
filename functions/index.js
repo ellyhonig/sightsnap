@@ -9,11 +9,19 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const stripe = require('stripe')('sk_test_51QPR06DtGYmKpI3FUJvJglztV25EDYActNyZeVq42JmBAxJgC5XPTQwhqK93uuSL2jfuXQ9OU1NUXGpnZysb96sV00gT78VsMB');
 const cors = require('cors')({ origin: true });
 
+// Initialize Firebase Admin SDK
 admin.initializeApp();
 
+// Load Stripe with your secret from Firebase config
+const stripe = require('stripe')(functions.config().stripe.secret);
+
+/**
+ * createPaymentIntent
+ *
+ * Creates a payment intent for $5.00 USD.
+ */
 exports.createPaymentIntent = functions.https.onRequest((request, response) => {
   cors(request, response, async () => {
     if (request.method !== 'POST') {
@@ -21,6 +29,7 @@ exports.createPaymentIntent = functions.https.onRequest((request, response) => {
       return;
     }
     try {
+      // Create a payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount: 500, // $5.00 in cents
         currency: 'usd',
@@ -38,24 +47,4 @@ exports.createPaymentIntent = functions.https.onRequest((request, response) => {
       response.status(500).send(error.message);
     }
   });
-});
-
-exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
-  const sig = request.headers['stripe-signature'];
-
-  try {
-    const event = stripe.webhooks.constructEvent(
-      request.rawBody,
-      sig,
-      'whsec_your_webhook_secret'
-    );
-
-    if (event.type === 'payment_intent.succeeded') {
-      console.log('Payment succeeded:', event.data.object);
-    }
-
-    response.json({ received: true });
-  } catch (err) {
-    response.status(400).send(`Webhook Error: ${err.message}`);
-  }
 });

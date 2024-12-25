@@ -14,9 +14,13 @@
   "main": "index.js",
   "dependencies": {
     "cors": "^2.8.5",
-    "firebase-admin": "^11.11.1",
-    "firebase-functions": "^6.1.1",
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.2.0",
     "stripe": "^14.8.0"
   },
-  "private": true
+  "private": true,
+  "version": "1.0.0",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
